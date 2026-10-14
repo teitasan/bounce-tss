@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反射弾TSS（プロトタイプ）</title>
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <div id="modebar"><button type="button" data-mode="rogue">ローグライク</button><button type="button" data-mode="shell">甲羅バトル</button><button type="button" data-mode="cards">カード甲羅</button><button type="button" data-mode="custom">カスタム甲羅</button></div>
+
+    <div id="hud" class="rogue-only">
+      <div class="row"><span id="lv">Lv 1</span><div id="xpbar"><div id="xpfill"></div></div></div>
+      <div id="hp"></div>
+      <div id="info"></div>
+    </div>
+    <div id="build" class="rogue-only"></div>
+    <div id="help" class="rogue-only">WASD 移動 / マウス 照準 / 左クリック / Space 射撃 / Esc ポーズ / Tab デバッグ</div>
+
+    <div id="paused" class="overlay" hidden><div class="panel"><h2>ポーズ中</h2><p>Esc で再開</p></div></div>
+
+    <div id="levelup" class="overlay rogue-only" hidden>
+      <div class="panel">
+        <h2>レベルアップ</h2>
+        <div id="choices"></div>
+        <p class="muted">クリック、または 1 / 2 / 3 キーで選択</p>
+      </div>
+    </div>
+
+    <div id="gameover" class="overlay rogue-only" hidden>
+      <div class="panel">
+        <h2>GAME OVER</h2>
+        <dl id="result"></dl>
+        <button id="restart" type="button">リスタート（R）</button>
+      </div>
+    </div>
+
+    <div id="debug" class="rogue-only" hidden></div>
+
+    <div id="shell-hud" class="shell-only"></div>
+    <div id="shell-debug" class="shell-only" hidden></div>
+    <div id="hand" class="shell-only" hidden></div>
+    <div id="shell-help" class="help shell-only">WASD 移動 / マウス 照準 / 左クリック・Space 甲羅を投げる（手持ちの甲羅は自分の周りを回る）<span class="cards-only">（画面下が今の甲羅と次に来る甲羅）</span><span class="custom-only"> / Tab デバッグ</span> / Esc ポーズ</div>
+    <div id="draft" class="overlay cards-only" hidden>
+      <div class="panel">
+        <h2>カードを交換</h2>
+        <p id="draft-sub" class="muted"></p>
+        <p id="draft-order"></p>
+        <ul id="draft-log"></ul>
+        <div id="draft-choices"></div>
+        <h3 id="draft-deck-title"></h3>
+        <div id="draft-deck"></div>
+        <button id="draft-pass" type="button">交換しない（N）</button>
+      </div>
+    </div>
+    <div id="hit-flash" class="shell-only"></div>
+    <div id="replay" class="shell-only" hidden>
+      <div class="lb top"></div>
+      <div class="lb bottom"></div>
+      <div class="rp-badge"><i></i>REPLAY</div>
+      <div class="rp-hint">R / クリックでスキップ</div>
+    </div>
+    <div id="round-intro" class="shell-only" hidden>
+      <div class="ri-round"></div>
+      <div class="ri-sub"></div>
+      <div class="ri-count"></div>
+      <div class="ri-lineup"></div>
+    </div>
+    <div id="shell-result" class="overlay shell-only" hidden>
+      <div class="panel result-panel">
+        <div id="shell-result-tag" class="result-tag"></div>
+        <h2 id="shell-winner"></h2>
+        <div id="shell-result-stars" class="result-stars"></div>
+        <div id="shell-result-build" class="result-build"></div>
+        <button id="shell-next" type="button">次のラウンド（R）</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

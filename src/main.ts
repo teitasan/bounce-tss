@@ -1,0 +1,70 @@
+import * as Phaser from 'phaser';
+import { ARENA } from './config';
+import { GameScene } from './GameScene';
+import { ShellScene } from './shell/ShellScene';
+import './style.css';
+
+type Mode = 'rogue' | 'shell' | 'cards' | 'custom';
+const SCENE_OF: Record<Mode, string> = { rogue: 'game', shell: 'shell', cards: 'cards', custom: 'custom' };
+const isMode = (v: unknown): v is Mode => v === 'rogue' || v === 'shell' || v === 'cards' || v === 'custom';
+
+/** 前回選んだモードがなければカスタム甲羅（今のメイン）で始める */
+const DEFAULT_MODE: Mode = 'custom';
+
+const readMode = (): Mode => {
+  try {
+    const v = localStorage.getItem('tss-mode');
+    return isMode(v) ? v : DEFAULT_MODE;
+  } catch {
+    return DEFAULT_MODE;
+  }
+};
+
+let mode = readMode();
+
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: ARENA.width,
+  height: ARENA.height,
+  backgroundColor: '#0a0d13',
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scene: [],
+});
+
+game.scene.add('game', GameScene, mode === 'rogue');
+game.scene.add('shell', new ShellScene('shell', 'plain'), mode === 'shell');
+game.scene.add('cards', new ShellScene('cards', 'cards'), mode === 'cards');
+game.scene.add('custom', new ShellScene('custom', 'custom'), mode === 'custom');
+
+function applyMode() {
+  document.body.classList.toggle('mode-rogue', mode === 'rogue');
+  document.body.classList.toggle('mode-shell', mode === 'shell');
+  document.body.classList.toggle('mode-cards', mode === 'cards');
+  document.body.classList.toggle('mode-custom', mode === 'custom');
+  document.querySelectorAll<HTMLButtonElement>('#modebar button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+}
+
+function switchMode(next: Mode) {
+  if (next === mode) return;
+  // 離れたモードは止めずに眠らせ、戻ったときに続きから遊べるようにする
+  game.scene.sleep(SCENE_OF[mode]);
+  mode = next;
+  game.scene.run(SCENE_OF[mode]);
+  try {
+    localStorage.setItem('tss-mode', mode);
+  } catch {
+    /* 保存できなくても動作には影響しない */
+  }
+  applyMode();
+}
+
+document.querySelectorAll<HTMLButtonElement>('#modebar button').forEach((b) => {
+  b.addEventListener('click', () => {
+    b.blur(); // Space で再度押されないように
+    switchMode(b.dataset.mode as Mode);
+  });
+});
+applyMode();
+
+if (import.meta.env.DEV) Object.assign(window, { __game: game });
