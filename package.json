@@ -1,18 +1,22 @@
 {
-  "name": "bounce-tss",
+  "name": "craft-koura",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
-    "typecheck": "tsc -p tsconfig.json"
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc -p tsconfig.json && tsc -p server/tsconfig.json",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "phaser": "4.2.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "1.60.2",
+    "@cloudflare/workers-types": "5.20260925.2",
     "typescript": "6.0.3",
-    "vite": "8.3.1"
+    "vite": "8.3.1",
+    "wrangler": "4.141.0"
   }
 }

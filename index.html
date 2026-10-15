@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>反射弾TSS（プロトタイプ）</title>
+    <title>クラフト甲羅</title>
   </head>
   <body>
     <div id="game"></div>
 
-    <div id="modebar"><button type="button" data-mode="rogue">ローグライク</button><button type="button" data-mode="shell">甲羅バトル</button><button type="button" data-mode="cards">カード甲羅</button><button type="button" data-mode="custom">カスタム甲羅</button></div>
+    <div id="modebar"><button type="button" data-mode="rogue">ローグライク</button><button type="button" data-mode="shell">甲羅バトル</button><button type="button" data-mode="cards">カード甲羅</button><button type="button" data-mode="custom">カスタム甲羅</button><button type="button" data-mode="craft">クラフト</button></div>
 
     <div id="hud" class="rogue-only">
       <div class="row"><span id="lv">Lv 1</span><div id="xpbar"><div id="xpfill"></div></div></div>
@@ -39,10 +39,33 @@
     <div id="debug" class="rogue-only" hidden></div>
 
     <div id="shell-hud" class="shell-only"></div>
+    <button id="online-btn" class="custom-only" type="button">オンライン対戦</button>
+    <div id="lobby" class="overlay custom-only" hidden>
+      <div class="panel lobby-panel">
+        <h2 id="lobby-title">オンライン対戦</h2>
+        <p id="lobby-msg" class="lobby-msg" hidden></p>
+        <div id="lobby-join">
+          <p class="muted">同じ部屋の名前を入れた人どうしで対戦できます（4人まで。空いた席は CPU）</p>
+          <label>名前 <input id="lobby-name" maxlength="12" autocomplete="off" /></label>
+          <label>部屋 <input id="lobby-room" maxlength="24" autocomplete="off" /></label>
+          <div class="lobby-actions"><button id="lobby-enter" type="button" class="primary">入室</button><button id="lobby-close" type="button">閉じる</button></div>
+        </div>
+        <div id="lobby-room-view" hidden>
+          <ul id="lobby-players"></ul>
+          <div class="lobby-share"><span>この URL を送ると同じ部屋に入れます</span><div><input id="lobby-url" readonly /><button id="lobby-copy" type="button">コピー</button></div></div>
+          <p id="lobby-wait" class="muted"></p>
+          <div class="lobby-actions"><button id="lobby-start" type="button" class="primary">対戦開始</button><button id="lobby-back" type="button">試合に戻る</button><button id="lobby-leave" type="button">退室</button></div>
+        </div>
+      </div>
+    </div>
     <div id="shell-debug" class="shell-only" hidden></div>
     <div id="hand" class="shell-only" hidden></div>
-    <div id="shell-help" class="help shell-only">WASD 移動 / マウス 照準 / 左クリック・Space 甲羅を投げる（手持ちの甲羅は自分の周りを回る）<span class="cards-only">（画面下が今の甲羅と次に来る甲羅）</span><span class="custom-only"> / Tab デバッグ</span> / Esc ポーズ</div>
+    <div id="shell-help" class="help shell-only">WASD 移動 / マウス 照準 / 左クリック・Space 甲羅を投げる（手持ちの甲羅は自分の周りを回る）<span class="cards-only">（画面下が今の甲羅と次に来る甲羅）</span><span class="craft-only"> / 箱を甲羅で壊すと素材が出る（触れて拾う）</span><span class="custom-only craft-only"> / Tab デバッグ</span> / Esc ポーズ / 画面をクリックするとマウスを画面内に固定（Esc で解除）</div>
     <div id="draft" class="overlay cards-only" hidden>
+      <div class="dp" id="draft-p0"></div>
+      <div class="dp" id="draft-p1"></div>
+      <div class="dp" id="draft-p2"></div>
+      <div class="dp" id="draft-p3"></div>
       <div class="panel">
         <h2>カードを交換</h2>
         <p id="draft-sub" class="muted"></p>

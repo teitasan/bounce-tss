@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "craft-koura",
+  "main": "server/worker.ts",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/ws"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }]
+}

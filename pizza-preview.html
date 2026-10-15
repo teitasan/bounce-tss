@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ピザのお試し</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 24px 16px 60px; background: radial-gradient(circle at 50% 0%, #1d2638, #0a0d13 70%); color: #e8eefc; font-family: system-ui, -apple-system, 'Hiragino Sans', sans-serif; }
+      h1 { margin: 0 0 4px; font-size: 22px; }
+      h2 { margin: 28px 0 10px; font-size: 15px; color: #aab6cf; font-weight: 700; }
+      .muted { color: #8492ad; font-size: 13px; }
+      .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+      .cell { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; border-radius: 12px; background: rgba(20, 27, 42, .85); border: 1px solid #2d3850; min-width: 96px; }
+      .cell span { font-size: 12px; color: #cfd8ea; text-align: center; }
+      .cell small { font-size: 11px; color: #8492ad; }
+      .row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px; border-radius: 12px; background: #10141c; border: 1px solid #2d3850; }
+      .row b { width: 64px; font-size: 12px; color: #8492ad; font-weight: 600; }
+      .stage { position: relative; height: 220px; border-radius: 12px; background: #10141c; border: 1px solid #2d3850; overflow: hidden; }
+      .chef { position: absolute; left: 120px; top: 110px; width: 28px; height: 28px; margin: -14px; border-radius: 50%; background: #6ef2ff; box-shadow: 0 0 18px #6ef2ff88; }
+      .orbit { position: absolute; left: 120px; top: 110px; width: 0; height: 0; animation: spin 1.4s linear infinite; }
+      .orbit > div { position: absolute; width: 26px; height: 26px; margin: -13px; }
+      .orbit > div svg { animation: spin 0.7s linear infinite reverse; }
+      .fly { position: absolute; top: 90px; left: 260px; animation: bounce 2.4s linear infinite alternate; }
+      .fly svg { animation: spin 0.5s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes bounce { 0% { transform: translate(0, -60px); } 25% { transform: translate(120px, 70px); } 50% { transform: translate(260px, -40px); } 75% { transform: translate(380px, 60px); } 100% { transform: translate(480px, 0); } }
+    </style>
+  </head>
+  <body>
+    <h1>ピザのお試し描画</h1>
+    <p class="muted">効果をトッピングで表す。同じ効果を重ねるとトッピングが増える（効果ごとに 2 × レベル 個）。</p>
+
+    <h2>強化なし</h2>
+    <div class="grid" id="plain"></div>
+
+    <h2>トッピングごと（Lv1 / Lv3）</h2>
+    <div class="grid" id="each"></div>
+
+    <h2>組み合わせの例</h2>
+    <div class="grid" id="combo"></div>
+
+    <h2>ゲーム中の大きさ（周回 22px / 飛んでいる 26px / 手元 34px / ドラフト 44px）。上が細かい版、下が簡略版（トッピングは種類ごとに1つを大きく）</h2>
+    <div id="sizes"></div>
+
+    <h2>動き（周りを回る3枚と、回転しながら跳ねる1枚）</h2>
+    <div class="stage">
+      <div class="chef"></div>
+      <div class="orbit" id="orbit"></div>
+      <div class="fly" id="fly"></div>
+    </div>
+
+    <script type="module" src="/src/pizza-preview.ts"></script>
+  </body>
+</html>

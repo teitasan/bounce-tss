@@ -1,5 +1,11 @@
 export const ARENA = { width: 1280, height: 720, wall: 20 };
 
+/**
+ * ゲーム画面をこの分の1の解像度で描いて画面に合わせる（座標は ARENA のまま。カメラの拡大率で合わせる）。
+ * Retina などの高精細な画面では 1/2 にして、2倍の解像度で描いてくっきりさせる
+ */
+export const PIXEL = 1 / Math.min(2, Math.max(1, Math.round(globalThis.devicePixelRatio ?? 1)));
+
 export const PLAYER = { radius: 14, speed: 250, maxHp: 5, invincible: 1.0 };
 
 export type EnemyKind = 'grunt' | 'runner' | 'tank';

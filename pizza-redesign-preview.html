@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ピザSVG 改良案デザインギャラリー</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-dark: #0f131c;
+        --bg-card: rgba(23, 31, 48, 0.85);
+        --border: #2d3b55;
+        --accent: #ff9f43;
+        --text: #e8eefc;
+        --text-sub: #9aa8c7;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px 24px 80px;
+        background: radial-gradient(circle at 50% 0%, #1e283d, var(--bg-dark) 75%);
+        color: var(--text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.5;
+      }
+      .container { max-width: 1200px; margin: 0 auto; }
+      header { margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+      h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+      .lead { color: var(--text-sub); font-size: 14px; margin: 0; }
+
+      /* タブ切り替え */
+      .nav-tabs {
+        display: flex;
+        gap: 8px;
+        margin: 24px 0;
+        flex-wrap: wrap;
+      }
+      .tab-btn {
+        background: #141b2b;
+        color: var(--text-sub);
+        border: 1px solid var(--border);
+        padding: 10px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover { background: #202b42; color: #fff; }
+      .tab-btn.active {
+        background: #ff7733;
+        color: #fff;
+        border-color: #ff9955;
+        box-shadow: 0 4px 14px rgba(255, 119, 51, 0.35);
+      }
+
+      /* パターン比較カード */
+      .patterns-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .pattern-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        transition: transform 0.2s, border-color 0.2s;
+      }
+      .pattern-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+      .pattern-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: #334260;
+        color: #cbd5e1;
+        font-weight: bold;
+      }
+      .pattern-badge.recommend {
+        background: #ff5e3a;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(255, 94, 58, 0.4);
+      }
+      .pattern-title { font-size: 15px; font-weight: 700; margin: 12px 0 4px; }
+      .pattern-desc { font-size: 11.5px; color: var(--text-sub); margin: 0 0 12px; height: 34px; }
+
+      /* セクション */
+      h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 36px 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      h2::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: #ff7733;
+        border-radius: 2px;
+      }
+
+      /* グリッド */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+      }
+      .cell {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+      }
+      .cell span { font-size: 12px; font-weight: 600; color: #dbe4f3; }
+      .cell small { font-size: 10.5px; color: var(--text-sub); }
+
+      /* サイズ比較表 */
+      .size-table {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow-x: auto;
+        padding: 16px;
+      }
+      .size-row {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #1f2a3f;
+      }
+      .size-row:last-child { border-bottom: none; }
+      .size-label {
+        width: 140px;
+        flex-shrink: 0;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #9aa8c7;
+      }
+      .size-items {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .size-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 50px;
+      }
+      .size-item span { font-size: 10px; color: #7e8da9; }
+
+      /* アニメーションステージ */
+      .stage {
+        position: relative;
+        height: 240px;
+        border-radius: 14px;
+        background: #0b0e14;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .chef {
+        position: absolute;
+        left: 140px;
+        top: 120px;
+        width: 28px;
+        height: 28px;
+        margin: -14px;
+        border-radius: 50%;
+        background: #6ef2ff;
+        box-shadow: 0 0 18px #6ef2ff88;
+      }
+      .orbit {
+        position: absolute;
+        left: 140px;
+        top: 120px;
+        width: 0;
+        height: 0;
+        animation: spin 2s linear infinite;
+      }
+      .orbit > div {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        margin: -15px;
+      }
+      .orbit > div svg { animation: spin 1s linear infinite reverse; }
+      .fly {
+        position: absolute;
+        top: 100px;
+        left: 320px;
+        animation: bounce 3s ease-in-out infinite alternate;
+      }
+      .fly svg { animation: spin 0.6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes bounce {
+        0% { transform: translate(0, -70px); }
+        25% { transform: translate(160px, 80px); }
+        50% { transform: translate(320px, -50px); }
+        75% { transform: translate(480px, 70px); }
+        100% { transform: translate(620px, 0); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🍕 ピザSVG 改良案デザイン比較</h1>
+        <p class="lead">
+          現在のピザ（Before）と、4つの改良コンセプト（After）を比較できます。トッピングごとの見た目、組み合わせ、ゲーム中の実サイズ、回転アニメーションを確認してください。
+        </p>
+      </header>
+
+      <!-- 概要カード -->
+      <div class="patterns-overview" id="overview-cards"></div>
+
+      <!-- 切り替えタブ -->
+      <div class="nav-tabs" id="tabs"></div>
+
+      <!-- メイン比較表示 -->
+      <h2 id="current-pattern-heading">基本のピザ（強化なし）</h2>
+      <div class="grid" id="plain-grid"></div>
+
+      <h2>トッピング別 Lv1 / Lv3（効果の表現）</h2>
+      <div class="grid" id="toppings-grid"></div>
+
+      <h2>複合コンボの例</h2>
+      <div class="grid" id="combo-grid"></div>
+
+      <h2>ゲーム中実サイズ（22px 周回 / 26px 飛翔 / 34px 手元 / 44px カード / 96px 大）</h2>
+      <div class="size-table" id="sizes-table"></div>
+
+      <h2>ゲーム中の動き（自機周回の3枚 ＆ 高速スピンバウンド弾）</h2>
+      <div class="stage">
+        <div class="chef"></div>
+        <div class="orbit" id="orbit"></div>
+        <div class="fly" id="fly"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      // 各デザインパターンのSVGジェネレータを定義
+      // 共通型: lv: Record<string, number>, size: number, simple?: boolean
+
+      const TOPPINGS_INFO = {
+        homing: { name: 'ブラックオリーブ', effect: '追尾' },
+        split: { name: '切れ目', effect: '分裂' },
+        multi: { name: 'ミニピザ3枚', effect: '3連' },
+        pierce: { name: 'ハラペーニョ', effect: '貫通' },
+        rebound: { name: 'ふっくら耳', effect: '反発' },
+        bounce: { name: 'ペパロニ', effect: '跳弾' },
+        accel: { name: '赤唐辛子', effect: '加速' },
+        big: { name: '分厚い生地', effect: '巨大化' },
+        fast: { name: 'バジル', effect: '高速化' },
+      };
+
+      const EFFECT_IDS = ['bounce', 'pierce', 'homing', 'accel', 'fast', 'split', 'rebound', 'big', 'multi'];
+
+      // ==========================================
+      // 0. 現行（Current / Before）
+      // ==========================================
+      const SLOTS_ORIG = [
+        ...Array.from({ length: 4 }, (_, i) => [11, i * 90 + 45]),
+        ...Array.from({ length: 9 }, (_, i) => [25, i * 40 + 10]),
+        [0, 0],
+        ...Array.from({ length: 9 }, (_, i) => [25, i * 40 + 30]),
+      ];
+
+      function pieceCurrent(kind, rot) {
+        const t = `rotate(${rot})`;
+        switch (kind) {
+          case 'bounce':
+            return `<g transform="${t}"><circle r="7.5" fill="#b8322a" stroke="#8e2219" stroke-width="1"/><circle cx="-2.5" cy="-2" r="1.1" fill="#e2695c"/><circle cx="2.4" cy="1.6" r="1" fill="#e2695c"/><circle cx="0.5" cy="-3.6" r=".8" fill="#e2695c"/></g>`;
+          case 'homing':
+            return `<g transform="${t}"><circle r="4.6" fill="#2b2622"/><circle r="1.8" fill="#f3cf6b"/></g>`;
+          case 'pierce':
+            return `<g transform="${t}"><circle r="5.6" fill="#5aa83a" stroke="#3d7a25" stroke-width="1"/><circle r="3.4" fill="#c9e7a6"/><circle cx="-1" cy="-.8" r=".7" fill="#f4f0d8"/><circle cx="1.2" cy=".6" r=".7" fill="#f4f0d8"/><circle cx="-.2" cy="1.5" r=".7" fill="#f4f0d8"/></g>`;
+          case 'accel':
+            return `<g transform="${t}"><path d="M-7 1 Q-1 -6 7 -2 Q1 3 -7 1Z" fill="#e2382c" stroke="#a5221a" stroke-width=".8"/><path d="M7 -2 l3 -2.5" stroke="#3f8f3a" stroke-width="1.8" stroke-linecap="round"/></g>`;
+          case 'fast':
+            return `<g transform="${t}"><ellipse rx="7" ry="3.6" fill="#3f8f3a"/><path d="M-6 0 H6" stroke="#2c6a28" stroke-width=".8"/></g>`;
+          default:
+            return '';
+        }
+      }
+
+      function pizzaCurrent(lv, size = 64, simple = size < 48) {
+        function body(lv, cx, cy, R, isSimple) {
+          const L = (e) => lv[e] ?? 0;
+          const k = R / 48;
+          const thick = L('big') > 0;
+          const inner = (thick ? 38 : 42) * k;
+          let s = `<g>`;
+          if (L('rebound') > 0) {
+            const n = 14;
+            for (let i = 0; i < n; i++) {
+              const a = (i / n) * Math.PI * 2;
+              s += `<circle cx="${(cx + Math.cos(a) * (R - 3 * k)).toFixed(1)}" cy="${(cy + Math.sin(a) * (R - 3 * k)).toFixed(1)}" r="${(7 + 1.5 * Math.min(3, L('rebound'))) * k}" fill="#e8a95a" stroke="#b97a35" stroke-width="${1.2 * k}"/>`;
+            }
+          }
+          s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${thick ? '#c98a45' : '#d99a4e'}" stroke="#a96c2e" stroke-width="${(thick ? 3 : 2) * k}"/>`;
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner}" fill="#c4422c"/>`;
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner - 3 * k}" fill="#f3cf6b"/>`;
+          for (const [dx, dy, r] of [[-12, -8, 7], [10, 12, 6], [14, -14, 5], [-16, 14, 5]]) {
+            s += `<circle cx="${cx + dx * k}" cy="${cy + dy * k}" r="${r * k}" fill="#f8e3a0" opacity=".8"/>`;
+          }
+          const list = [];
+          for (const e of ['bounce', 'pierce', 'homing', 'accel', 'fast']) {
+            for (let i = 0; i < (isSimple ? Math.min(1, L(e)) : 2 * L(e)); i++) list.push(e);
+          }
+          const simpleSlots = [[], [[0, 0]], [[14, 180], [14, 0]], [[15, 210], [15, 330], [15, 90]], [[15, 225], [15, 315], [15, 45], [15, 135]], [[0, 0], [17, 225], [17, 315], [17, 45], [17, 135]]];
+          const slots = isSimple ? simpleSlots[Math.min(list.length, 5)] : SLOTS_ORIG;
+          list.slice(0, slots.length).forEach((e, i) => {
+            const [d, deg] = slots[i];
+            const a = (deg * Math.PI) / 180;
+            const scale = (inner / (42 * k)) * k * (isSimple ? (list.length === 1 ? 2.6 : 1.8) : 1);
+            const pos = (inner / (42 * k)) * k;
+            s += `<g transform="translate(${cx + Math.cos(a) * d * pos} ${cy + Math.sin(a) * d * pos}) scale(${scale})">${pieceCurrent(e, isSimple ? 0 : deg * 2)}</g>`;
+          });
+          const cuts = L('split') > 0 ? (isSimple ? 2 : 1 + L('split')) : 0;
+          for (let i = 0; i < cuts; i++) {
+            const a = (i / cuts) * Math.PI;
+            const dx = Math.cos(a) * inner;
+            const dy = Math.sin(a) * inner;
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#fff4d6" stroke-width="${(isSimple ? 4 : 2.2) * k}" stroke-linecap="round" opacity=".9"/>`;
+          }
+          return s + '</g>';
+        }
+
+        let b = '';
+        if ((lv.multi ?? 0) > 0) {
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+            b += body({ ...lv, multi: 0 }, 50 + Math.cos(a) * 25, 50 + Math.sin(a) * 25, 24, simple);
+          }
+        } else {
+          b = body(lv, 50, 50, 48, simple);
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-6 -6 112 112" aria-hidden="true">${b}</svg>`;
+      }
+
+      // ==========================================
+      // 1. パターンA: ベイクド＆リッチ（焼き立て・シズル感）★おすすめ
+      // ==========================================
+      function pizzaPatternA(lv, size = 64, simple = size < 48) {
+        const uid = 'pA_' + Math.random().toString(36).substring(2, 7);
+        function pieceA(kind, rot) {
+          const t = `rotate(${rot})`;
+          switch (kind) {
+            case 'bounce': // ペパロニ: 縁が少し焦げて立ち上がったカップペパロニ、肉のツヤとスパイス点
+              return `<g transform="${t}">
+                <circle r="7.8" fill="#a82318" stroke="#68120a" stroke-width="1"/>
+                <circle r="6.6" fill="#c83628"/>
+                <ellipse cx="-1.5" cy="-1.5" rx="4" ry="2.8" fill="#df4d3c" opacity="0.8"/>
+                <circle cx="-2.5" cy="-2.5" r="1.3" fill="#ffffff" opacity="0.6"/>
+                <circle cx="2.2" cy="2.2" r="0.9" fill="#580f08"/>
+                <circle cx="-1.2" cy="2.8" r="0.8" fill="#580f08"/>
+                <circle cx="3.2" cy="-1.2" r="0.7" fill="#580f08"/>
+              </g>`;
+            case 'homing': // オリーブ: リング状の断面スライス（真ん中に穴）、オリーブ特有の深いパープルブラックと立体光沢
+              return `<g transform="${t}">
+                <ellipse rx="5.4" ry="4.4" fill="#1e181e" stroke="#100d11" stroke-width="0.8"/>
+                <ellipse rx="2.5" ry="2.0" fill="#f8b63a"/>
+                <ellipse rx="2.2" ry="1.7" fill="#c43d26" opacity="0.7"/>
+                <path d="M -3.5 -2 A 4.2 3.4 0 0 1 2.5 -3" stroke="#5a4e5c" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+              </g>`;
+            case 'pierce': // ハラペーニョ: リアルな波打つ断面リング、鮮やかなグリーン果肉とクリーム色の種
+              return `<g transform="${t}">
+                <path d="M0 -6 C3 -6 5.5 -4 5.8 -1 C6 2 4.5 5.5 1 5.8 C-3 6 -5.5 4 -5.8 0 C-6 -3 -4 -5.8 0 -6 Z" fill="#3d8224" stroke="#255514" stroke-width="0.9"/>
+                <circle r="3.6" fill="#8ed05e"/>
+                <circle r="2.4" fill="#f6c244" opacity="0.85"/>
+                <circle cx="-1.1" cy="-0.8" r="0.9" fill="#fff9dc"/>
+                <circle cx="1.2" cy="0.6" r="0.8" fill="#fff9dc"/>
+                <circle cx="-0.2" cy="1.4" r="0.8" fill="#fff9dc"/>
+              </g>`;
+            case 'accel': // 赤唐辛子: ツヤとグラデーションのあるホットチリペッパーと緑のヘタ
+              return `<g transform="${t}">
+                <path d="M-8 2 Q-2 -7 7 -2 Q2 4 -8 2Z" fill="#d92a1c" stroke="#87130a" stroke-width="0.8"/>
+                <path d="M-5 0.5 Q-1 -4 4 -2" stroke="#ff7c70" stroke-width="1.1" fill="none" opacity="0.85" stroke-linecap="round"/>
+                <path d="M7 -2 Q9 -3 10.5 -5" stroke="#38852e" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+                <circle cx="7" cy="-2" r="1.3" fill="#2d6a25"/>
+              </g>`;
+            case 'fast': // バジル: 先端がツンと尖ったリアルなフレッシュバジル葉＋葉脈
+              return `<g transform="${t}">
+                <path d="M -7 0 C -4 -5 4 -4.5 7.5 0 C 4 4.5 -4 5 -7 0 Z" fill="#2e8b28" stroke="#1d5c19" stroke-width="0.7"/>
+                <path d="M -5.5 0 C -2 -1 3 -0.5 6 0" stroke="#85d87a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+                <path d="M -1 0 Q 1 -2 3 -2" stroke="#85d87a" stroke-width="0.6" fill="none"/>
+                <path d="M -1 0 Q 1 2 3 2" stroke="#85d87a" stroke-width="0.6" fill="none"/>
+              </g>`;
+            default:
+              return '';
+          }
+        }
+
+        function body(lv, cx, cy, R, isSimple) {
+          const L = (e) => lv[e] ?? 0;
+          const k = R / 48;
+          const thick = L('big') > 0;
+          const inner = (thick ? 37 : 41.5) * k;
+          let s = `<g>`;
+
+          // rebound (反発): オーブンでふっくら盛り上がった香ばしい耳（チーズインクラスト）
+          if (L('rebound') > 0) {
+            const n = 15;
+            for (let i = 0; i < n; i++) {
+              const a = (i / n) * Math.PI * 2;
+              const dist = R - 2.5 * k;
+              const bx = (cx + Math.cos(a) * dist).toFixed(1);
+              const by = (cy + Math.sin(a) * dist).toFixed(1);
+              const br = (7.5 + 1.8 * Math.min(3, L('rebound'))) * k;
+              s += `<circle cx="${bx}" cy="${by}" r="${br}" fill="#df9444" stroke="#a45f22" stroke-width="${1.2 * k}"/>`;
+              // 焦げ目
+              if (i % 2 === 0) {
+                s += `<ellipse cx="${bx}" cy="${by}" rx="${br * 0.4}" ry="${br * 0.25}" fill="#6b350e" opacity="0.65" transform="rotate(${(a * 180 / Math.PI) + 90} ${bx} ${by})"/>`;
+              }
+            }
+          }
+
+          // 生地の耳（ふっくらグラデーション＋焼き色）
+          s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${thick ? '#b87232' : '#d88d44'}" stroke="#914f1d" stroke-width="${(thick ? 3.2 : 2.2) * k}"/>`;
+          // 耳の内側ハイライトとオーブンの焦げ斑点（char marks）
+          s += `<circle cx="${cx}" cy="${cy}" r="${R - 3 * k}" fill="none" stroke="#f0b162" stroke-width="${2 * k}" opacity="0.7"/>`;
+          // オーブンの焦げ目斑点
+          for (let i = 0; i < 7; i++) {
+            const a = (i / 7) * Math.PI * 2 + 0.3;
+            const dist = R - 3.2 * k;
+            const px = cx + Math.cos(a) * dist;
+            const py = cy + Math.sin(a) * dist;
+            s += `<ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" rx="${(1.5 + (i % 2)) * k}" ry="${1.2 * k}" fill="#542506" opacity="0.6" transform="rotate(${i * 45} ${px} ${py})"/>`;
+          }
+
+          // トマトソース（自然なにじみ）
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner}" fill="#ba2918" stroke="#87170a" stroke-width="${0.8 * k}"/>`;
+          // とろ〜りチーズ（中心は熱々イエロー、フチは濃厚ゴールド）
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner - 2.8 * k}" fill="#fec447"/>`;
+          // チーズのこんがり焦げ目スポット（焼き立てオーブン感）
+          const toasts = [
+            [-11, -9, 7, 5, 25],
+            [12, 10, 6.5, 4.5, -30],
+            [13, -13, 5.5, 4, 15],
+            [-14, 12, 6, 4.5, -45],
+            [0, -15, 4.5, 3, 0],
+            [-2, 14, 5, 3.5, 60]
+          ];
+          for (const [dx, dy, rx, ry, rot] of toasts) {
+            const px = cx + dx * k;
+            const py = cy + dy * k;
+            s += `<ellipse cx="${px}" cy="${py}" rx="${rx * k}" ry="${ry * k}" fill="#e69628" opacity="0.75" transform="rotate(${rot} ${px} ${py})"/>`;
+            s += `<ellipse cx="${px}" cy="${py}" rx="${(rx * 0.5) * k}" ry="${(ry * 0.4) * k}" fill="#9d4b0d" opacity="0.45" transform="rotate(${rot} ${px} ${py})"/>`;
+          }
+
+          // トッピング配置
+          const list = [];
+          for (const e of ['bounce', 'pierce', 'homing', 'accel', 'fast']) {
+            for (let i = 0; i < (isSimple ? Math.min(1, L(e)) : 2 * L(e)); i++) list.push(e);
+          }
+          const simpleSlots = [[], [[0, 0]], [[14, 180], [14, 0]], [[15, 210], [15, 330], [15, 90]], [[15, 225], [15, 315], [15, 45], [15, 135]], [[0, 0], [17, 225], [17, 315], [17, 45], [17, 135]]];
+          const slots = isSimple ? simpleSlots[Math.min(list.length, 5)] : SLOTS_ORIG;
+          list.slice(0, slots.length).forEach((e, i) => {
+            const [d, deg] = slots[i];
+            const a = (deg * Math.PI) / 180;
+            const scale = (inner / (42 * k)) * k * (isSimple ? (list.length === 1 ? 2.5 : 1.7) : 1);
+            const pos = (inner / (42 * k)) * k;
+            s += `<g transform="translate(${cx + Math.cos(a) * d * pos} ${cy + Math.sin(a) * d * pos}) scale(${scale})">${pieceA(e, isSimple ? 0 : deg * 2)}</g>`;
+          });
+
+          // split (分裂): カッターの切れ目（溝の影ととろけたチーズの縁）
+          const cuts = L('split') > 0 ? (isSimple ? 2 : 1 + L('split')) : 0;
+          for (let i = 0; i < cuts; i++) {
+            const a = (i / cuts) * Math.PI;
+            const dx = Math.cos(a) * inner;
+            const dy = Math.sin(a) * inner;
+            // 切れ目下のソースの深み
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#7e170c" stroke-width="${(isSimple ? 3.5 : 2.0) * k}" stroke-linecap="round"/>`;
+            // チーズの切り口ハイライト
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#fff6db" stroke-width="${(isSimple ? 1.8 : 1.0) * k}" stroke-dasharray="8 4" stroke-linecap="round"/>`;
+          }
+
+          return s + '</g>';
+        }
+
+        let b = '';
+        if ((lv.multi ?? 0) > 0) {
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+            b += body({ ...lv, multi: 0 }, 50 + Math.cos(a) * 25, 50 + Math.sin(a) * 25, 24, simple);
+          }
+        } else {
+          b = body(lv, 50, 50, 48, simple);
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-6 -6 112 112" aria-hidden="true">${b}</svg>`;
+      }
+
+      // ==========================================
+      // 2. パターンB: ネオ・ポップ／アーケード（視認性特化）
+      // ==========================================
+      function pizzaPatternB(lv, size = 64, simple = size < 48) {
+        function pieceB(kind, rot) {
+          const t = `rotate(${rot})`;
+          switch (kind) {
+            case 'bounce': // ペパロニ: 太枠＋真っ赤＋星/丸の白いハイライト
+              return `<g transform="${t}">
+                <circle r="7.5" fill="#e82b2b" stroke="#3d0a0a" stroke-width="1.8"/>
+                <circle cx="-2.5" cy="-2.5" r="2" fill="#ffffff" opacity="0.9"/>
+                <circle cx="2.5" cy="2" r="1.2" fill="#991515"/>
+              </g>`;
+            case 'homing': // オリーブ: 太い黒リング＋白いハイライト光
+              return `<g transform="${t}">
+                <ellipse rx="5.5" ry="5.5" fill="#202028" stroke="#000000" stroke-width="1.8"/>
+                <ellipse rx="2.5" ry="2.5" fill="#fecb38"/>
+                <circle cx="-2" cy="-2" r="1.2" fill="#ffffff" opacity="0.9"/>
+              </g>`;
+            case 'pierce': // ハラペーニョ: ビビッドなライムグリーン＋太枠＋種
+              return `<g transform="${t}">
+                <circle r="6" fill="#48bb2e" stroke="#164d0c" stroke-width="1.8"/>
+                <circle r="3.2" fill="#a4f07a"/>
+                <circle cx="-1" cy="-0.8" r="0.9" fill="#ffffff"/>
+                <circle cx="1.2" cy="0.8" r="0.9" fill="#ffffff"/>
+              </g>`;
+            case 'accel': // 赤唐辛子: ポップなカーブと太枠
+              return `<g transform="${t}">
+                <path d="M-7 2 Q-1 -6 7 -2 Q1 4 -7 2Z" fill="#ff3333" stroke="#5c0606" stroke-width="1.6"/>
+                <path d="M-4 0 Q0 -3 5 -1.5" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+                <path d="M7 -2 l3 -2.5" stroke="#2db82e" stroke-width="2.4" stroke-linecap="round"/>
+              </g>`;
+            case 'fast': // バジル: スタイリッシュで鮮やかなリーフ
+              return `<g transform="${t}">
+                <path d="M-7 0 Q0 -6 7 0 Q0 6 -7 0Z" fill="#2eb835" stroke="#0f4f13" stroke-width="1.6"/>
+                <path d="M-5 0 H4" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+              </g>`;
+            default:
+              return '';
+          }
+        }
+
+        function body(lv, cx, cy, R, isSimple) {
+          const L = (e) => lv[e] ?? 0;
+          const k = R / 48;
+          const thick = L('big') > 0;
+          const inner = (thick ? 37 : 41) * k;
+          let s = `<g>`;
+
+          // rebound (反発): ポップなモコモコ太い耳
+          if (L('rebound') > 0) {
+            const n = 12;
+            for (let i = 0; i < n; i++) {
+              const a = (i / n) * Math.PI * 2;
+              const bx = (cx + Math.cos(a) * (R - 2 * k)).toFixed(1);
+              const by = (cy + Math.sin(a) * (R - 2 * k)).toFixed(1);
+              s += `<circle cx="${bx}" cy="${by}" r="${(8 + 1.8 * Math.min(3, L('rebound'))) * k}" fill="#ffa733" stroke="#4a2200" stroke-width="${2 * k}"/>`;
+            }
+          }
+
+          // 外枠の生地（太枠＋アニメ調）
+          s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${thick ? '#d97e26' : '#f5a623'}" stroke="#3b1d03" stroke-width="${(thick ? 3.8 : 2.8) * k}"/>`;
+          // 耳のハイライト弧
+          s += `<path d="M ${cx - R * 0.7} ${cy - R * 0.55} A ${R} ${R} 0 0 1 ${cx + R * 0.7} ${cy - R * 0.55}" stroke="#ffe599" stroke-width="${3 * k}" fill="none" stroke-linecap="round" opacity="0.9"/>`;
+
+          // ソース（深紅）
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner}" fill="#d62211" stroke="#3b1d03" stroke-width="${1.5 * k}"/>`;
+          // チーズ（ビビッドイエロー）
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner - 3.5 * k}" fill="#ffcc00"/>`;
+          // とろけたチーズの丸いハイライト
+          s += `<ellipse cx="${cx - 10 * k}" cy="${cy - 12 * k}" rx="${8 * k}" ry="${5 * k}" fill="#fff3a8" transform="rotate(-20 ${cx - 10 * k} ${cy - 12 * k})"/>`;
+
+          // トッピング配置
+          const list = [];
+          for (const e of ['bounce', 'pierce', 'homing', 'accel', 'fast']) {
+            for (let i = 0; i < (isSimple ? Math.min(1, L(e)) : 2 * L(e)); i++) list.push(e);
+          }
+          const simpleSlots = [[], [[0, 0]], [[14, 180], [14, 0]], [[15, 210], [15, 330], [15, 90]], [[15, 225], [15, 315], [15, 45], [15, 135]], [[0, 0], [17, 225], [17, 315], [17, 45], [17, 135]]];
+          const slots = isSimple ? simpleSlots[Math.min(list.length, 5)] : SLOTS_ORIG;
+          list.slice(0, slots.length).forEach((e, i) => {
+            const [d, deg] = slots[i];
+            const a = (deg * Math.PI) / 180;
+            const scale = (inner / (42 * k)) * k * (isSimple ? (list.length === 1 ? 2.5 : 1.7) : 1);
+            const pos = (inner / (42 * k)) * k;
+            s += `<g transform="translate(${cx + Math.cos(a) * d * pos} ${cy + Math.sin(a) * d * pos}) scale(${scale})">${pieceB(e, isSimple ? 0 : deg * 2)}</g>`;
+          });
+
+          // split (分裂): コミック調のダイナミックスライス線
+          const cuts = L('split') > 0 ? (isSimple ? 2 : 1 + L('split')) : 0;
+          for (let i = 0; i < cuts; i++) {
+            const a = (i / cuts) * Math.PI;
+            const dx = Math.cos(a) * inner;
+            const dy = Math.sin(a) * inner;
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#2a1202" stroke-width="${(isSimple ? 4.5 : 2.8) * k}" stroke-linecap="round"/>`;
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#ffffff" stroke-width="${(isSimple ? 2.0 : 1.2) * k}" stroke-linecap="round"/>`;
+          }
+
+          return s + '</g>';
+        }
+
+        let b = '';
+        if ((lv.multi ?? 0) > 0) {
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+            b += body({ ...lv, multi: 0 }, 50 + Math.cos(a) * 25, 50 + Math.sin(a) * 25, 24, simple);
+          }
+        } else {
+          b = body(lv, 50, 50, 48, simple);
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-6 -6 112 112" aria-hidden="true">${b}</svg>`;
+      }
+
+      // ==========================================
+      // 3. パターンC: 本格ナポリ／薪窯クラフト（職人スタイル）
+      // ==========================================
+      function pizzaPatternC(lv, size = 64, simple = size < 48) {
+        function pieceC(kind, rot) {
+          const t = `rotate(${rot})`;
+          switch (kind) {
+            case 'bounce': // サラミ/ペパロニ: 薪窯焼きの不規則な縁とスパイス
+              return `<g transform="${t}">
+                <path d="M0 -7.2 C4.5 -7.5 7.5 -4 7.2 0 C7.5 4.5 4 7.5 0 7.2 C-4.5 7.5 -7.5 4 -7.2 0 C-7.5 -4.5 -4 -7.5 0 -7.2 Z" fill="#93231c" stroke="#5c100a" stroke-width="0.9"/>
+                <circle cx="-2.5" cy="-2.5" r="1.3" fill="#dc4a3b"/>
+                <circle cx="2" cy="1.8" r="1" fill="#dc4a3b"/>
+                <circle cx="1.5" cy="-2.5" r="0.6" fill="#fce4b8"/>
+              </g>`;
+            case 'homing': // イタリアンオリーブ: 種抜きオーバル、オリーブオイルの光沢
+              return `<g transform="${t}">
+                <ellipse rx="5.2" ry="4.2" fill="#242127"/>
+                <ellipse rx="2.4" ry="1.8" fill="#bc3220"/>
+                <path d="M -3 -1.8 A 3.8 2.8 0 0 1 1 -2.8" stroke="#877e91" stroke-width="0.8" fill="none"/>
+              </g>`;
+            case 'pierce': // スパイシーペッパー
+              return `<g transform="${t}">
+                <circle r="5.5" fill="#326c22" stroke="#1c4412" stroke-width="0.9"/>
+                <circle r="3.2" fill="#78bf4e"/>
+                <circle cx="-1" cy="-0.7" r="0.8" fill="#fff7d6"/>
+                <circle cx="1" cy="0.7" r="0.8" fill="#fff7d6"/>
+              </g>`;
+            case 'accel': // カラブリア産ペペロンチーノ
+              return `<g transform="${t}">
+                <path d="M-7 1.5 Q-1 -5 7 -1.5 Q1 3.5 -7 1.5Z" fill="#c41f14" stroke="#680b04" stroke-width="0.8"/>
+                <path d="M7 -1.5 l3 -2" stroke="#2e6423" stroke-width="1.7" stroke-linecap="round"/>
+              </g>`;
+            case 'fast': // フレッシュバジル（薪窯の熱で少ししんなり）
+              return `<g transform="${t}">
+                <path d="M -7 0 C -4 -5 4 -4 7.5 0 C 4 4.5 -4 4 -7 0 Z" fill="#24751f"/>
+                <path d="M -5 0 H 5" stroke="#5cb854" stroke-width="0.8"/>
+              </g>`;
+            default:
+              return '';
+          }
+        }
+
+        function body(lv, cx, cy, R, isSimple) {
+          const L = (e) => lv[e] ?? 0;
+          const k = R / 48;
+          const thick = L('big') > 0;
+          const inner = (thick ? 37 : 41) * k;
+          let s = `<g>`;
+
+          // rebound (反発): ぷっくり不規則に膨らんだコルニチョーネ（ナポリの耳）
+          if (L('rebound') > 0) {
+            const n = 14;
+            for (let i = 0; i < n; i++) {
+              const a = (i / n) * Math.PI * 2;
+              const dist = R - 2 * k;
+              const bx = (cx + Math.cos(a) * dist).toFixed(1);
+              const by = (cy + Math.sin(a) * dist).toFixed(1);
+              s += `<circle cx="${bx}" cy="${by}" r="${(8 + 1.6 * Math.min(3, L('rebound'))) * k}" fill="#c97e3a" stroke="#7e4313" stroke-width="${1.2 * k}"/>`;
+            }
+          }
+
+          // コルニチョーネ（耳）
+          s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${thick ? '#a86127' : '#cf8743'}" stroke="#783e14" stroke-width="${2.2 * k}"/>`;
+
+          // 薪窯の黒いレオパードスポット（ヒョウ柄の焦げ斑点）
+          const spots = [
+            [35, 10, 2.2, 1.6], [20, 32, 2.8, 1.8], [-25, 28, 2.0, 1.5],
+            [-36, 5, 2.5, 1.8], [-28, -25, 2.2, 1.4], [10, -35, 3.0, 2.0],
+            [30, -22, 2.0, 1.4]
+          ];
+          for (const [dx, dy, rx, ry] of spots) {
+            s += `<ellipse cx="${cx + dx * k}" cy="${cy + dy * k}" rx="${rx * k}" ry="${ry * k}" fill="#2a1608" opacity="0.85"/>`;
+          }
+
+          // 鮮やかなフレッシュトマトポモドーロソース
+          s += `<circle cx="${cx}" cy="${cy}" r="${inner}" fill="#ba2311"/>`;
+
+          // ちぎり水牛モッツァレラチーズ（自然に溶けた白い島）
+          const mozz = [
+            [0, 0, 14, 12, 10], [-13, -11, 10, 8, -20], [13, -10, 11, 9, 30],
+            [-10, 13, 11, 8.5, 45], [12, 12, 10, 8, -15]
+          ];
+          for (const [dx, dy, rx, ry, rot] of mozz) {
+            const px = cx + dx * k;
+            const py = cy + dy * k;
+            s += `<ellipse cx="${px}" cy="${py}" rx="${rx * k}" ry="${ry * k}" fill="#fff3cf" transform="rotate(${rot} ${px} ${py})"/>`;
+            s += `<ellipse cx="${px}" cy="${py}" rx="${(rx * 0.7) * k}" ry="${(ry * 0.7) * k}" fill="#ffffff" opacity="0.9" transform="rotate(${rot} ${px} ${py})"/>`;
+          }
+
+          // トッピング配置
+          const list = [];
+          for (const e of ['bounce', 'pierce', 'homing', 'accel', 'fast']) {
+            for (let i = 0; i < (isSimple ? Math.min(1, L(e)) : 2 * L(e)); i++) list.push(e);
+          }
+          const simpleSlots = [[], [[0, 0]], [[14, 180], [14, 0]], [[15, 210], [15, 330], [15, 90]], [[15, 225], [15, 315], [15, 45], [15, 135]], [[0, 0], [17, 225], [17, 315], [17, 45], [17, 135]]];
+          const slots = isSimple ? simpleSlots[Math.min(list.length, 5)] : SLOTS_ORIG;
+          list.slice(0, slots.length).forEach((e, i) => {
+            const [d, deg] = slots[i];
+            const a = (deg * Math.PI) / 180;
+            const scale = (inner / (42 * k)) * k * (isSimple ? (list.length === 1 ? 2.5 : 1.7) : 1);
+            const pos = (inner / (42 * k)) * k;
+            s += `<g transform="translate(${cx + Math.cos(a) * d * pos} ${cy + Math.sin(a) * d * pos}) scale(${scale})">${pieceC(e, isSimple ? 0 : deg * 2)}</g>`;
+          });
+
+          // split (切れ目)
+          const cuts = L('split') > 0 ? (isSimple ? 2 : 1 + L('split')) : 0;
+          for (let i = 0; i < cuts; i++) {
+            const a = (i / cuts) * Math.PI;
+            const dx = Math.cos(a) * inner;
+            const dy = Math.sin(a) * inner;
+            s += `<line x1="${cx - dx}" y1="${cy - dy}" x2="${cx + dx}" y2="${cy + dy}" stroke="#590c05" stroke-width="${(isSimple ? 3.5 : 2.0) * k}" stroke-linecap="round"/>`;
+          }
+
+          return s + '</g>';
+        }
+
+        let b = '';
+        if ((lv.multi ?? 0) > 0) {
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+            b += body({ ...lv, multi: 0 }, 50 + Math.cos(a) * 25, 50 + Math.sin(a) * 25, 24, simple);
+          }
+        } else {
+          b = body(lv, 50, 50, 48, simple);
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-6 -6 112 112" aria-hidden="true">${b}</svg>`;
+      }
+
+      // ==========================================
+      // 4. パターンD: ダイナミック・チーズプル（アクション＆糸引き）
+      // ==========================================
+      function pizzaPatternD(lv, size = 64, simple = size < 48) {
+        // パターンAの美味しさをベースに、切れ目（split）でチーズが糸を引く動的エフェクトを強調
+        function body(lv, cx, cy, R, isSimple) {
+          // パターンAの描画にチーズストリングスを追加
+          const k = R / 48;
+          let s = pizzaPatternA(lv, 100, isSimple);
+          // 外枠のsvgタグを除去して中身を取り出し
+          const match = s.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+          let inner = match ? match[1] : '';
+
+          // split（分裂）がある場合、チーズの糸引きストリングスを追加
+          const L = (e) => lv[e] ?? 0;
+          if (L('split') > 0) {
+            const cuts = isSimple ? 2 : 1 + L('split');
+            for (let i = 0; i < cuts; i++) {
+              const a = (i / cuts) * Math.PI;
+              const perp = a + Math.PI / 2;
+              const ox = Math.cos(perp) * 3 * k;
+              const oy = Math.sin(perp) * 3 * k;
+              // 糸引きチーズ
+              for (const sign of [-1, 1]) {
+                const midD = (15 * sign) * k;
+                const mx = cx + Math.cos(a) * midD;
+                const my = cy + Math.sin(a) * midD;
+                inner += `<path d="M ${mx - ox * 1.5} ${my - oy * 1.5} Q ${mx} ${my + (sign * 4 * k)} ${mx + ox * 1.5} ${my + oy * 1.5}" stroke="#fff0ba" stroke-width="${1.8 * k}" fill="none" stroke-linecap="round"/>`;
+              }
+            }
+          }
+          return inner;
+        }
+
+        let b = '';
+        if ((lv.multi ?? 0) > 0) {
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+            b += `<g transform="translate(${50 + Math.cos(a) * 25 - 25} ${50 + Math.sin(a) * 25 - 25}) scale(0.5)">${pizzaPatternA({ ...lv, multi: 0 }, 100, simple).match(/<svg[^>]*>([\s\S]*)<\/svg>/)[1]}</g>`;
+          }
+        } else {
+          b = body(lv, 50, 50, 48, simple);
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="-6 -6 112 112" aria-hidden="true">${b}</svg>`;
+      }
+
+      // ==========================================
+      // UI コントロール & レンダリング
+      // ==========================================
+      const PATTERNS = [
+        {
+          id: 'patternA',
+          name: 'パターンA: ベイクド＆リッチ',
+          sub: 'オーブン焼き立て・シズル感 ★おすすめ',
+          badge: 'おすすめ！',
+          isRecommend: true,
+          render: pizzaPatternA,
+          desc: '香ばしい小麦色の焦げ斑点、とろけたチーズのグラデーション、立体的な具材（カップペパロニ、輪切りオリーブなど）で食欲をそそる王道改良案。',
+        },
+        {
+          id: 'patternB',
+          name: 'パターンB: ネオ・ポップ／アーケード',
+          sub: 'くっきり輪郭・視認性特化',
+          badge: '視認性No.1',
+          isRecommend: false,
+          render: pizzaPatternB,
+          desc: '太めのアウトラインとビビッドなアニメ塗り。22pxの極小サイズや高速回転でもピザと効果が一瞬で判別できます。',
+        },
+        {
+          id: 'patternC',
+          name: 'パターンC: 本格ナポリ／薪窯クラフト',
+          sub: '薪窯レオパード焦げ・モッツァレラ',
+          badge: '職人風',
+          isRecommend: false,
+          render: pizzaPatternC,
+          desc: '不規則なヒョウ柄焦げ（レオパードスポット）と、トマトソースの上にぽってり溶けたモッツァレラが美しい本格イタリアンスタイル。',
+        },
+        {
+          id: 'patternD',
+          name: 'パターンD: チーズプル・アクション',
+          sub: 'とろ〜り糸引き・躍動感',
+          badge: 'ギミック',
+          isRecommend: false,
+          render: pizzaPatternD,
+          desc: 'パターンAの美味しさに加え、カット部分からチーズが糸を引くような躍動感ある演出。回転しながら飛ぶ弾として映えます。',
+        },
+        {
+          id: 'current',
+          name: '現在のピザ（Before）',
+          sub: 'いま実装されているSVG',
+          badge: '現在の実装',
+          isRecommend: false,
+          render: pizzaCurrent,
+          desc: '現在のプレーンなSVG。単色のベタ塗りが中心で、少し平坦に見える状態です。',
+        },
+      ];
+
+      let currentPatternId = 'patternA';
+
+      function renderOverviewCards() {
+        const container = document.getElementById('overview-cards');
+        container.innerHTML = PATTERNS.map((p) => `
+          <div class="pattern-card" style="cursor:pointer" onclick="selectPattern('${p.id}')">
+            <span class="pattern-badge ${p.isRecommend ? 'recommend' : ''}">${p.badge}</span>
+            <div style="margin: 8px 0;">
+              ${p.render({ bounce: 1, homing: 1, fast: 1 }, 110, false)}
+            </div>
+            <div class="pattern-title">${p.name}</div>
+            <div class="pattern-desc">${p.desc}</div>
+            <button class="tab-btn ${p.id === currentPatternId ? 'active' : ''}" style="width:100%;margin-top:auto;font-size:12px;padding:6px 0;">
+              ${p.id === currentPatternId ? '表示中' : 'この案を詳しく見る'}
+            </button>
+          </div>
+        `).join('');
+      }
+
+      function renderTabs() {
+        const container = document.getElementById('tabs');
+        container.innerHTML = PATTERNS.map((p) => `
+          <button class="tab-btn ${p.id === currentPatternId ? 'active' : ''}" onclick="selectPattern('${p.id}')">
+            ${p.name}
+          </button>
+        `).join('');
+      }
+
+      window.selectPattern = function(id) {
+        currentPatternId = id;
+        renderTabs();
+        renderOverviewCards();
+        renderMainView();
+      };
+
+      function renderMainView() {
+        const p = PATTERNS.find((x) => x.id === currentPatternId);
+        document.getElementById('current-pattern-heading').textContent = `${p.name} のバリエーション`;
+
+        // 1. 強化なし
+        const plainHtml = `
+          <div class="cell">
+            ${p.render({}, 140, false)}
+            <span>通常サイズ (140px)</span>
+            <small>基本のピザ</small>
+          </div>
+          <div class="cell">
+            ${p.render({}, 80, false)}
+            <span>中サイズ (80px)</span>
+          </div>
+          <div class="cell">
+            ${p.render({}, 44, true)}
+            <span>ゲーム中 (44px)</span>
+            <small>ドラフト用</small>
+          </div>
+          <div class="cell">
+            ${p.render({}, 26, true)}
+            <span>弾サイズ (26px)</span>
+            <small>バトル中の弾</small>
+          </div>
+        `;
+        document.getElementById('plain-grid').innerHTML = plainHtml;
+
+        // 2. トッピング別
+        const toppingsHtml = EFFECT_IDS.map((e) => {
+          const info = TOPPINGS_INFO[e];
+          return `
+            <div class="cell">
+              ${p.render({ [e]: 1 }, 96, false)}
+              <span>${info.effect} Lv1</span>
+              <small>${info.name}</small>
+            </div>
+            <div class="cell">
+              ${p.render({ [e]: 3 }, 96, false)}
+              <span>${info.effect} Lv3</span>
+              <small>${info.name} × 3</small>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('toppings-grid').innerHTML = toppingsHtml;
+
+        // 3. コンボ
+        const combos = [
+          [{ bounce: 2, fast: 1 }, '跳弾2・高速1', 'ペパロニ＋バジル'],
+          [{ homing: 2, pierce: 1 }, '追尾2・貫通1', 'オリーブ＋ハラペーニョ'],
+          [{ split: 1, rebound: 1 }, '分裂1・反発1', '切れ目＋ふっくら耳'],
+          [{ multi: 1, bounce: 1 }, '3連1・跳弾1', 'ミニピザ3枚'],
+          [{ bounce: 2, accel: 1, fast: 1 }, '跳弾2・加速1・高速1', 'ペパロニ＋唐辛子＋バジル'],
+          [{ homing: 1, split: 1, pierce: 1, rebound: 1, bounce: 1, accel: 1, big: 1, fast: 1 }, '全部盛り Lv1', 'デラックスピザ'],
+          [{ homing: 3, pierce: 3, bounce: 3 }, '最強コンボ Lv3', 'オリーブ・ハラペーニョ・ペパロニ'],
+          [{ big: 2, rebound: 2 }, '極厚チーズ耳', '分厚い生地＋ふっくら耳'],
+        ];
+        document.getElementById('combo-grid').innerHTML = combos.map(([lv, title, sub]) => `
+          <div class="cell">
+            ${p.render(lv, 110, false)}
+            <span>${title}</span>
+            <small>${sub}</small>
+          </div>
+        `).join('');
+
+        // 4. 実サイズ比較
+        const sampleLvs = [
+          [{}, '強化なし'],
+          [{ homing: 1 }, '追尾1'],
+          [{ pierce: 2 }, '貫通2'],
+          [{ split: 1, rebound: 1 }, '分裂1反発1'],
+          [{ multi: 1 }, '3連1'],
+          [{ bounce: 2, accel: 1 }, '跳弾2加速1'],
+          [{ big: 2 }, '巨大化2'],
+        ];
+        const sizes = [22, 26, 34, 44, 96];
+        let sizeHtml = `
+          <div class="size-row">
+            <div class="size-label">効果</div>
+            <div class="size-items">
+              ${sampleLvs.map(([_, name]) => `<div class="size-item" style="width:70px"><span>${name}</span></div>`).join('')}
+            </div>
+          </div>
+        `;
+        sizes.forEach((sz) => {
+          sizeHtml += `
+            <div class="size-row">
+              <div class="size-label">${sz}px (詳細版)</div>
+              <div class="size-items">
+                ${sampleLvs.map(([lv]) => `<div class="size-item" style="width:70px">${p.render(lv, sz, false)}</div>`).join('')}
+              </div>
+            </div>
+            <div class="size-row">
+              <div class="size-label">${sz}px (簡略版)</div>
+              <div class="size-items">
+                ${sampleLvs.map(([lv]) => `<div class="size-item" style="width:70px">${p.render(lv, sz, true)}</div>`).join('')}
+              </div>
+            </div>
+          `;
+        });
+        document.getElementById('sizes-table').innerHTML = sizeHtml;
+
+        // 5. アニメーションステージ
+        const orbitLvs = [{ homing: 1 }, { split: 1, pierce: 1 }, { bounce: 2 }];
+        document.getElementById('orbit').innerHTML = orbitLvs
+          .map((lv, i) => {
+            const a = (i / 3) * Math.PI * 2;
+            return `<div style="left:${Math.cos(a) * 36}px;top:${Math.sin(a) * 36}px">${p.render(lv, 28, true)}</div>`;
+          })
+          .join('');
+        document.getElementById('fly').innerHTML = p.render({ bounce: 2, accel: 1, fast: 1 }, 32, true);
+      }
+
+      // 初回実行
+      renderOverviewCards();
+      renderTabs();
+      renderMainView();
+    </script>
+  </body>
+</html>

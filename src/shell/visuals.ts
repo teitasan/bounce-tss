@@ -15,6 +15,8 @@ export interface Marks {
   fast: boolean; // 後ろに流線
   bounce: boolean; // 内側の点の輪
   multi: boolean; // 3つの小円（周回・アイコンのみ）
+  curve: boolean; // 横に弧の矢印
+  slow: boolean; // 前に逆向きの山形
 }
 
 /** 性能から模様を決める（カード甲羅の種類にもカスタム甲羅にも使える） */
@@ -30,6 +32,8 @@ export function marksOf(spec: ShellSpec): Marks {
     fast: spec.speed > base.speed * 1.1,
     bounce: spec.bounces > base.bounces,
     multi: (spec.ways ?? 1) > 1,
+    curve: !!spec.curve,
+    slow: spec.speed < base.speed * 0.9,
   };
 }
 
@@ -80,14 +84,25 @@ export function drawShell(
   }
 
   // 本体：外側の色、内側に一段暗い甲羅の模様、ハイライト
-  g.fillStyle(spec.color, alpha);
+  // SFC 風：黒い輪郭、平たい塗り、甲羅の六角の模様、四角いハイライト
+  g.fillStyle(0x000000, alpha);
+  g.fillCircle(x, y, r + (m.big ? 3 : 2));
+  g.fillStyle(shade(spec.color, 0.65), alpha);
   g.fillCircle(x, y, r);
-  g.fillStyle(shade(spec.color, 0.62), alpha);
-  g.fillCircle(x, y, r * 0.62);
-  g.fillStyle(0xffffff, 0.35 * alpha);
-  g.fillCircle(x - r * 0.35, y - r * 0.35, r * 0.25);
-  g.lineStyle(m.big ? 3 : 1.6, 0xeaffea, alpha);
-  g.strokeCircle(x, y, r);
+  g.fillStyle(spec.color, alpha);
+  g.fillCircle(x - 1, y - 1, r - 1.5);
+  g.lineStyle(1.5, shade(spec.color, 0.5), alpha);
+  g.beginPath();
+  for (let i = 0; i <= 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    const px = x + Math.cos(a) * r * 0.45;
+    const py = y + Math.sin(a) * r * 0.45;
+    if (i === 0) g.moveTo(px, py);
+    else g.lineTo(px, py);
+  }
+  g.strokePath();
+  g.fillStyle(0xffffff, 0.8 * alpha);
+  g.fillRect(Math.round(x - r * 0.55), Math.round(y - r * 0.6), 3, 3);
 
   if (m.bounce) {
     g.fillStyle(0xffffff, 0.8 * alpha);
@@ -154,6 +169,8 @@ export function shellSvg(spec: ShellSpec, size = 26): string {
   }
   if (m.rebound) s += `<circle cx="${c}" cy="${c}" r="${R + 3}" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.1"/>`;
   if (m.split) s += `<path d="M${c - r * 0.5} ${c}L${c + r * 0.55} ${c - r * 0.55}M${c - r * 0.5} ${c}L${c + r * 0.55} ${c + r * 0.55}" stroke="#fff" stroke-width="1.5"/>`;
+  if (m.curve) s += `<path d="M${c - R * 0.9} ${c - R - 2.5}A${R + 2.5} ${R + 2.5} 0 0 1 ${c + R + 2.5} ${c + R * 0.2}" fill="none" stroke="#9cc0ff" stroke-width="1.4"/><path d="M${c + R + 0.5} ${c + R * 0.2 - 2}l2 3.2 2-3.2" fill="none" stroke="#9cc0ff" stroke-width="1.4"/>`;
+  if (m.slow) s += `<path d="M${c + R + 4.5} ${c - 3}l-3 3 3 3M${c + R + 8} ${c - 3}l-3 3 3 3" fill="none" stroke="#c8b8ff" stroke-width="1.3"/>`;
   if (m.homing) s += `<circle cx="${c + r * 0.32}" cy="${c}" r="${Math.max(1.6, r * 0.32)}" fill="#fff"/><circle cx="${c + r * 0.42}" cy="${c}" r="${Math.max(0.8, r * 0.15)}" fill="#111"/>`;
   return `<svg class="shell-ico" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${s}</svg>`;
 }

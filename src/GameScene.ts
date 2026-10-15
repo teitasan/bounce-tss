@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { ABILITIES, ABILITY_BY_ID, emptyBuild, statsFor, type AbilityId, type Build, type BulletStats } from './abilities';
-import { ARENA, ENEMY_KINDS, LIMITS, PLAYER, SPAWN, xpToNext, type EnemyKind } from './config';
+import { ARENA, ENEMY_KINDS, LIMITS, PIXEL, PLAYER, SPAWN, xpToNext, type EnemyKind } from './config';
 import { ui, type Choice } from './ui';
 
 const L = ARENA.wall;
@@ -122,6 +122,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // 画面は ARENA の 1/PIXEL の解像度なので、カメラで縮めて全体を映す
+    this.cameras.main.setZoom(1 / PIXEL).centerOn(ARENA.width / 2, ARENA.height / 2);
     this.drawArena();
     this.g = this.add.graphics().setDepth(10);
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE') as GameScene['keys'];

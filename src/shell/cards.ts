@@ -1,3 +1,5 @@
+import type { ShellLevels } from './custom';
+
 export type ShellType = 'normal' | 'bouncy' | 'split' | 'homing' | 'heavy' | 'triple' | 'fast' | 'pierce' | 'accel';
 
 export interface ShellSpec {
@@ -25,13 +27,17 @@ export interface ShellSpec {
   rebound?: number;
   /** 反射するたびに速さにかける倍率（元の速さの2倍まで） */
   accel?: number;
+  /** 一定の向き（時計回り）に曲がり続ける速さ（rad/s） */
+  curve?: number;
+  /** カスタム甲羅：この性能の元になった効果のレベル（見た目のトッピングに使う） */
+  levels?: ShellLevels;
 }
 
 /** 甲羅の速さ全体にかける倍率 */
 export const SPEED_SCALE = 0.8;
 
 export const SHELLS: Record<ShellType, ShellSpec> = {
-  normal: { name: '緑甲羅', desc: '標準。4回反射', color: 0x3fae3f, radius: 9, speed: 400 * SPEED_SCALE, bounces: 4, life: 6 },
+  normal: { name: 'ノーマル甲羅', desc: '標準。4回反射', color: 0x3fae3f, radius: 9, speed: 400 * SPEED_SCALE, bounces: 4, life: 6 },
   bouncy: { name: '跳ね甲羅', desc: '遅いが9回反射し、長く残る', color: 0x2fc7b8, radius: 8, speed: 300 * SPEED_SCALE, bounces: 9, life: 9 },
   split: { name: '分裂甲羅', desc: '最初の反射で、左右に子甲羅を2つ飛ばす', color: 0xb6d93a, radius: 9, speed: 380 * SPEED_SCALE, bounces: 3, life: 6, split: true },
   homing: { name: '追尾甲羅', desc: '投げた瞬間から近くの相手を追う（近づくと曲がるのをやめる）', color: 0xe8453c, radius: 9, speed: 340 * SPEED_SCALE, bounces: 3, life: 6, homingTurn: 3 },
