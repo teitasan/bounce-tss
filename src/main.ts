@@ -71,4 +71,7 @@ document.querySelectorAll<HTMLButtonElement>('#modebar button').forEach((b) => {
 });
 applyMode();
 
+// GitHub Pages 版は部屋サーバーがないので、オンライン対戦のボタンを出さない
+if (import.meta.env.VITE_OFFLINE_ONLY === '1') document.getElementById('online-btn')?.remove();
+
 if (import.meta.env.DEV) Object.assign(window, { __game: game });

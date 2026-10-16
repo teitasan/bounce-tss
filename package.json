@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "typecheck": "tsc -p tsconfig.json && tsc -p server/tsconfig.json",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "build:pages": "vite build --config vite.pages.config.ts",
+    "preview:pages": "vite preview --config vite.pages.config.ts"
   },
   "dependencies": {
     "phaser": "4.2.1"

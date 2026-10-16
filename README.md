@@ -14,6 +14,12 @@ npm install
 npm run dev   # http://localhost:5173（ゲームと対戦用の部屋サーバーが1つの Vite で同時に動く）
 ```
 
+### GitHub Pages 版（CPU 相手のみ）
+
+https://teitasan.github.io/bounce-tss/
+
+main に push するたびに GitHub Actions（`.github/workflows/pages.yml`）がビルドして公開する。部屋サーバーがないのでオンライン対戦のボタンは出さない（`vite.pages.config.ts` で `VITE_OFFLINE_ONLY` を立てる）。手元で確かめるときは `npm run build:pages && npm run preview:pages`。
+
 ### デプロイ（Cloudflare Workers + Durable Objects）
 
 ```bash

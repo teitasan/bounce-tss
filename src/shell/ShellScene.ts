@@ -206,6 +206,8 @@ interface Snap {
   mp?: number;
 }
 const SNAP_HZ = 30;
+/** 静的ファイルだけで公開する版（GitHub Pages）。オンライン対戦を出さない */
+const OFFLINE_ONLY = import.meta.env.VITE_OFFLINE_ONLY === '1';
 const OFFLINE_NAMES = ['あなた', 'CPU1', 'CPU2', 'CPU3'];
 
 const TRAIL_LENGTH = 8; // 残像に使う過去の位置の数（1フレームに1つ）
@@ -304,9 +306,9 @@ export class ShellScene extends Phaser.Scene {
     return this.mode === 'craft';
   }
 
-  /** オンライン対戦があるモード */
+  /** オンライン対戦があるモード（GitHub Pages 版は部屋サーバーがないので出さない） */
   private get online() {
-    return this.mode === 'custom';
+    return this.mode === 'custom' && !OFFLINE_ONLY;
   }
 
   /** ラウンドの合間にドラフトがあり、先に MATCH.winTarget 勝で優勝するモード */
