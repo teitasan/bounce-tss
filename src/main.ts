@@ -23,6 +23,13 @@ const readMode = (): Mode => {
 // ?r=部屋名 付きの URL で開いたら、オンライン対戦のあるカスタム甲羅で始める
 let mode: Mode = new URLSearchParams(location.search).get('r') ? 'custom' : readMode();
 
+/** body にモードのクラスを付ける。甲羅のモードは試合場の上下にプレイヤーの帯があり、ゲーム画面の大きさが変わる */
+function setBodyMode() {
+  for (const m of ['rogue', 'shell', 'cards', 'custom', 'craft'] as Mode[]) document.body.classList.toggle(`mode-${m}`, mode === m);
+}
+// ゲームを作る前に付けておき、最初から帯を除いた大きさで画面を合わせる
+setBodyMode();
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
@@ -40,13 +47,23 @@ game.scene.add('cards', new ShellScene('cards', 'cards'), mode === 'cards');
 game.scene.add('custom', new ShellScene('custom', 'custom'), mode === 'custom');
 game.scene.add('craft', new ShellScene('craft', 'craft'), mode === 'craft');
 
+/**
+ * ゲーム画面を親（帯の間）の大きさに合わせ直す。帯の有無はモードで変わる。
+ * Phaser は1回目で親の大きさだけ読み直し、画面の大きさに反映するのは次の呼び出しなので2回呼ぶ
+ */
+function fitGame() {
+  game.scale.refresh();
+  game.scale.refresh();
+}
+game.events.once('ready', fitGame);
+// ウィンドウの大きさが変わったときも、Phaser 任せだと1回前の大きさのままになることがあるので、
+// ゲーム画面の入れ物（帯の間）の大きさが変わるたびに合わせ直す
+new ResizeObserver(fitGame).observe(document.getElementById('game')!);
+
 function applyMode() {
-  document.body.classList.toggle('mode-rogue', mode === 'rogue');
-  document.body.classList.toggle('mode-shell', mode === 'shell');
-  document.body.classList.toggle('mode-cards', mode === 'cards');
-  document.body.classList.toggle('mode-custom', mode === 'custom');
-  document.body.classList.toggle('mode-craft', mode === 'craft');
+  setBodyMode();
   document.querySelectorAll<HTMLButtonElement>('#modebar button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+  fitGame();
 }
 
 function switchMode(next: Mode) {

@@ -83,9 +83,17 @@ class Ui {
     });
   }
 
-  setPaused(paused: boolean) {
+  /** Esc のメニュー。sub を渡すとポーズではなく「メニュー」として出す（オンライン対戦中など、ゲームは止まらない） */
+  setPaused(paused: boolean, sub = '') {
     $('paused').hidden = !paused;
+    $('menu-title').textContent = sub ? 'メニュー' : 'ポーズ中';
+    $('menu-sub').textContent = sub;
+    $('menu-sub').hidden = !sub;
+    $('menu-close').onclick = () => this.menuClose();
   }
+
+  /** メニューの「ゲームに戻る」。今動いているモードが差し替える */
+  menuClose: () => void = () => {};
 
   isModalOpen() {
     return this.modalKeys !== null;

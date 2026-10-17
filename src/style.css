@@ -17,7 +17,6 @@ html, body { margin: 0; height: 100%; background: #05070b; color: #e8eefc; font-
 #build div { display: flex; justify-content: space-between; gap: 12px; }
 .pips { color: #6ef2ff; letter-spacing: 1px; }
 
-#help, .help { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #6d7a94; pointer-events: none; white-space: nowrap; }
 
 .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(5, 7, 11, .55); }
 .panel { background: #141a26; border: 1px solid #2d3850; border-radius: 12px; padding: 20px 24px; text-align: center; max-width: 92vw; }
@@ -47,21 +46,17 @@ label.drow { display: flex; }
 
 body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-cards):not(.mode-custom):not(.mode-craft) .cards-only, body:not(.mode-custom) .custom-only:not(.craft-only), body:not(.mode-craft) .craft-only:not(.custom-only), body:not(.mode-custom):not(.mode-craft) .custom-only.craft-only { display: none !important; }
 
-#modebar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: #141a26; border: 1px solid #2d3850; border-radius: 8px; padding: 3px; z-index: 5; }
-#modebar button { font: inherit; font-size: 13px; padding: 4px 12px; border: 0; border-radius: 6px; background: transparent; color: #8492ad; }
+#modebar { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; background: #0f141e; border: 1px solid #2d3850; border-radius: 8px; padding: 3px; }
+#modebar button { font: inherit; font-size: 13px; padding: 6px 12px; border: 0; border-radius: 6px; background: transparent; color: #8492ad; }
 #modebar button.active { background: #2a3a55; color: #e8eefc; }
 
-#shell-hud { position: fixed; top: 12px; left: 16px; pointer-events: none; font-size: 14px; text-shadow: 0 1px 2px #000; }
-.srow { display: grid; grid-template-columns: 12px 64px 60px auto; align-items: center; gap: 6px; }
-.srow.out { opacity: .45; }
-.srow .dot { width: 10px; height: 10px; border-radius: 50%; }
-.srow .hearts { color: #ff6b81; letter-spacing: 1px; }
-.srow .wins { color: #aab6cf; font-variant-numeric: tabular-nums; }
 #shell-next { font: inherit; padding: 8px 20px; border-radius: 8px; border: 1px solid #5fd35f; background: #1c2a3a; color: #e8eefc; }
 
-#hand { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; pointer-events: none; }
-.card { width: 150px; min-height: 64px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: 2px 8px; align-items: center; padding: 8px 10px; background: rgba(20, 26, 38, .92); border: 2px solid #2d3850; border-radius: 10px; font-size: 13px; }
-.card.selected { border-color: #ffffff; transform: translateY(-6px); }
+#hand { display: flex; justify-content: center; gap: 8px; pointer-events: none; flex: 1; min-width: 0; align-self: center; }
+/* 手元の甲羅がないモードでも、真ん中の場所は空けておく（右のカードを右端に置くため） */
+.pbar #hand[hidden] { display: flex !important; visibility: hidden; }
+.card { width: 150px; min-height: 58px; box-sizing: border-box; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: 2px 8px; align-items: center; padding: 8px 10px; background: rgba(20, 26, 38, .92); border: 2px solid #2d3850; border-radius: 10px; font-size: 13px; }
+.card.selected { border-color: #ffffff; }
 .card.empty { opacity: .45; }
 .card.next { width: 124px; min-height: 0; opacity: .7; border-style: dashed; transform: scale(.9); }
 .card .key { grid-row: 1 / 3; font-size: 11px; color: #0a0d13; background: #aab6cf; border-radius: 4px; padding: 1px 6px; font-weight: 700; align-self: start; }
@@ -74,8 +69,6 @@ body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-c
 .deckcard { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #34425f; background: #1c2434; color: inherit; }
 .deckcard:hover:not(:disabled) { background: #223049; border-color: #ffffff; }
 .deckcard:disabled { opacity: .5; cursor: default; }
-.sdeck { display: flex; flex-wrap: wrap; gap: 2px; margin: 1px 0 5px 18px; max-width: 200px; }
-.sdeck i { width: 7px; height: 7px; border-radius: 2px; display: block; }
 #draft-order { margin: 4px 0; font-size: 14px; }
 #draft-log { list-style: none; padding: 0; margin: 0 0 12px; font-size: 13px; color: #aab6cf; }
 #draft-choices .choice { width: 170px; }
@@ -83,7 +76,6 @@ body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-c
 .choice:disabled { opacity: .4; cursor: default; }
 .choice .taken { font-size: 12px; color: #ff9a9a; font-weight: 600; }
 #draft-pass { margin-top: 14px; font: inherit; padding: 6px 18px; border-radius: 8px; border: 1px solid #5a6b8f; background: #1c2434; color: #e8eefc; }
-.sdeck.big i { width: 12px; height: 12px; border-radius: 3px; }
 
 #shell-debug { position: fixed; top: 56px; right: 16px; background: rgba(20, 26, 38, .95); border: 1px solid #2d3850; border-radius: 10px; padding: 10px 12px; font-size: 13px; z-index: 4; }
 #shell-debug h3 { margin: 0 0 6px; font-size: 13px; color: #8492ad; }
@@ -129,7 +121,7 @@ body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-c
 #replay .rp-hint { position: absolute; bottom: 64px; right: 20px; font-size: 12px; color: #aab6cf; }
 
 /* オンライン対戦 */
-#online-btn { position: fixed; top: 14px; left: 12px; z-index: 5; font: inherit; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid #4f7cff; background: rgba(20, 30, 55, .9); color: #cfe0ff; }
+#online-btn { margin-top: 10px; font: inherit; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid #4f7cff; background: rgba(20, 30, 55, .9); color: #cfe0ff; }
 #online-btn.on { border-color: #8dff7a; color: #dfffd8; }
 .lobby-panel { width: min(460px, 92vw); text-align: left; }
 .lobby-panel h2 { text-align: center; }
@@ -148,25 +140,20 @@ body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-c
 .lobby-share div { display: flex; gap: 6px; margin-top: 4px; }
 .lobby-share button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #34425f; background: #1c2434; color: #e8eefc; }
 #shell-next:disabled { opacity: .6; }
-/* オンライン対戦ボタンは右上に置き、左上のプレイヤー一覧や下の操作説明と重ならないようにする */
-#online-btn { top: 12px; left: auto; right: 16px; }
 
 
 .shell-ico { display: block; overflow: visible; }
 
 /* クラフト：甲羅に入っている素材 */
-.smats { display: flex; flex-wrap: wrap; gap: 1px; margin: -2px 0 5px 18px; min-height: 0; }
 .mat-ico { display: block; }
-.smats .mat-empty { width: 14px; height: 14px; display: block; }
-#hand .card { position: relative; }
-#hand .cpend { position: absolute; right: 8px; top: 6px; display: flex; align-items: center; gap: 2px; font-size: 12px; color: #cfd8ea; }
 
 /* ドラフト：四隅にプレイヤー1〜4の甲羅、真ん中に選ぶ画面 */
 #draft { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 660px) minmax(0, 1fr); grid-template-rows: 1fr 1fr; grid-template-areas: "p0 mid p1" "p2 mid p3"; gap: 16px; padding: 60px 16px 16px; place-items: stretch; overflow: auto; }
 #draft > .panel { grid-area: mid; align-self: center; max-width: none; padding: 16px 18px; }
 #draft > .panel h2 { margin-bottom: 4px; }
-#draft-choices { flex-wrap: nowrap; gap: 8px; }
-#draft-choices .choice { width: auto; flex: 1 1 0; min-width: 0; padding: 26px 8px 10px; gap: 4px; }
+#draft-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#draft-choices .choice { width: auto; min-width: 0; padding: 24px 8px 8px; gap: 3px; }
+#draft-choices .dc-ico { width: 40px; height: 40px; }
 #draft-choices .choice .desc { font-size: 11.5px; line-height: 1.4; }
 #draft-deck-title { margin-top: 12px; }
 #draft-pass { margin-top: 10px; }
@@ -196,4 +183,67 @@ body.mode-rogue .shell-only, body:not(.mode-rogue) .rogue-only, body:not(.mode-c
 @media (max-width: 960px) {
   #draft { grid-template-columns: 1fr 1fr; grid-template-rows: auto; grid-template-areas: "mid mid" "p0 p1" "p2 p3"; align-content: start; }
   #draft-p0, #draft-p1, #draft-p2, #draft-p3 { align-self: stretch; }
+}
+
+/* Esc のメニュー */
+#paused { z-index: 20; }
+.menu-panel { width: min(560px, 92vw); text-align: left; }
+.menu-panel h2 { text-align: center; }
+.menu-panel #menu-sub { text-align: center; margin: -6px 0 8px; font-size: 13px; }
+.menu-panel h3 { font-size: 12px; color: #8492ad; margin: 16px 0 6px; letter-spacing: 1px; }
+.menu-panel .help { list-style: none; margin: 0; padding: 0; font-size: 13px; color: #cfd8ea; display: grid; gap: 5px; }
+.menu-panel .help li { display: grid; grid-template-columns: 9.5em 1fr; gap: 8px; }
+.menu-panel .help b { color: #e8eefc; font-weight: 700; }
+#menu-close { display: block; margin: 18px auto 0; font: inherit; padding: 7px 20px; border-radius: 8px; border: 1px solid #5a6b8f; background: #1c2434; color: #e8eefc; }
+
+/* 試合場の上下の帯（甲羅のモード）。試合場は帯の間に収める */
+:root { --band: 86px; --pcw: clamp(240px, 30vw, 440px); }
+body:not(.mode-rogue) #game { top: var(--band); bottom: var(--band); }
+.pbar { position: fixed; left: 0; right: 0; height: var(--band); display: flex; align-items: center; gap: 12px; padding: 0 14px; box-sizing: border-box; pointer-events: none; }
+#pbar-top { top: 0; }
+#pbar-bottom { bottom: 0; }
+#round-label { flex: 1; min-width: 0; text-align: center; font-size: 13px; color: #8492ad; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* プレイヤーのカードは上下で同じ幅。真ん中（ラウンド表示・手元の甲羅）が残りの幅を使う */
+.pbar .pcard { flex: 0 0 var(--pcw); width: var(--pcw); min-width: 0; }
+.pcard { box-sizing: border-box; height: 70px; padding: 7px 12px; background: #121826; border: 1px solid #263149; border-left: 4px solid var(--c, #2d3850); border-radius: 10px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+.pcard:empty { visibility: hidden; }
+.pcard.out { opacity: .4; }
+.pcard.me { box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent); }
+.pc-head { display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; }
+.pc-head .nm { font-weight: 700; color: var(--c); overflow: hidden; text-overflow: ellipsis; }
+.pc-head .you { font-size: 10px; color: #0a0d13; background: var(--c); border-radius: 4px; padding: 0 5px; font-weight: 700; }
+.pc-head .hp { color: #ff6b81; letter-spacing: 1px; }
+.pc-head .hp i { color: #3a4358; font-style: normal; }
+.pc-head .wins { margin-left: auto; color: #3a455c; font-size: 12px; letter-spacing: 1px; }
+.pc-head .wins b { color: #ffd166; font-weight: 400; }
+.pc-head .wins.num { color: #aab6cf; letter-spacing: 0; }
+.pc-shells { display: flex; gap: 10px; min-width: 0; }
+.pc-shell { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1 1 0; }
+.pc-shell .shell-ico { flex: none; }
+.pc-shell .badges { flex-wrap: nowrap; overflow: hidden; }
+.pc-shell .mat-ico { flex: none; }
+.pc-deck { display: flex; flex-wrap: wrap; gap: 3px; }
+.pc-deck i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+
+/* 手元の甲羅のカード（カスタム甲羅・クラフト） */
+.hcard { position: relative; flex: 0 1 216px; min-width: 0; height: 70px; box-sizing: border-box; display: flex; align-items: center; gap: 9px; padding: 7px 10px 7px 8px; background: linear-gradient(180deg, #1b2335, #121826); border: 1px solid #2a3550; border-top: 3px solid var(--c); border-radius: 12px; overflow: hidden; transition: transform .15s, box-shadow .15s, opacity .15s; }
+.hcard.now { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 0 18px color-mix(in srgb, var(--c) 45%, transparent); transform: translateY(-3px); }
+.hcard.wait { opacity: .5; }
+.hcard.wait .hc-ico { filter: grayscale(.7); }
+.hc-ico { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%); }
+.hc-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.hc-top { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.hc-tag { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: #2a3550; color: #cfd8ea; }
+.hcard.now .hc-tag { background: var(--c); color: #0a0d13; }
+.hc-name { font-weight: 700; font-size: 13px; }
+.hc-pend { margin-left: auto; display: flex; align-items: center; gap: 1px; font-size: 11px; color: #cfd8ea; }
+.hcard .badges { flex-wrap: wrap; gap: 2px; max-height: 36px; overflow: hidden; justify-content: flex-start; }
+.hcard .badge { font-size: 10.5px; line-height: 15px; padding: 0 5px; }
+.hc-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #0a0d13; }
+.hc-bar i { display: block; height: 100%; background: var(--c); }
+/* 真ん中が狭いときは手元の甲羅カードを詰める */
+@media (max-width: 1360px) {
+  .hcard { padding: 6px 7px 6px 6px; gap: 6px; }
+  .hc-ico { width: 30px; height: 30px; }
+  .hc-ico .shell-ico { width: 28px; height: 28px; }
 }

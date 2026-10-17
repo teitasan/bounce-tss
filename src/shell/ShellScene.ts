@@ -7,11 +7,11 @@ import { ui } from '../ui';
 import { B, L, PILLARS, R, SPAWNS, T, moveShell, resolveCircle, setArena, type Mover, type Rect, type WallGrid } from './arena';
 import { CAVE, COLS, ROWS, generateCave, type CaveMap } from './cave';
 import { CRAFT, CRATE_SPOTS, MATERIALS, MATERIAL_IDS, RECIPES, loadBook, randomMaterial, recipeKey, saveBook, type Crate, type Item, type Material } from './craft';
-import { drawShell, shade, shellSvg, type Marks } from './visuals';
+import { drawShell, pieOf, shade, shellSvg, type Marks } from './visuals';
 import { Net } from './net';
 import { levelsOf, pizzaSvg, pizzaTextureSvg } from './pizza';
 import { MAX_PLAYERS, ROOM_RE, type GuestMsg, type HostMsg } from './protocol';
-import { CARD_RULE, Hand, MATCH, SHELLS, SPLIT_ANGLE, SPLIT_CHILD, STARTER_DECK, draftCandidates, type ShellSpec, type ShellType } from './cards';
+import { CARD_RULE, DRAFT_CHOICES, Hand, MATCH, SHELLS, SPLIT_ANGLE, SPLIT_CHILD, STARTER_DECK, draftCandidates, type ShellSpec, type ShellType } from './cards';
 import { EFFECTS, EFFECT_IDS, Rotation, SHELL_COUNT, buildSpec, effectCandidates, emptyLevels, starterLoadout, summary, type EffectId, type ShellLevels } from './custom';
 
 /** plain: 甲羅バトル / cards: カード甲羅 / custom: カスタム甲羅 / craft: クラフト（箱を壊して素材を拾うと、その場で甲羅に入って効果になる） */
@@ -210,6 +210,9 @@ const SNAP_HZ = 30;
 const OFFLINE_ONLY = import.meta.env.VITE_OFFLINE_ONLY === '1';
 const OFFLINE_NAMES = ['あなた', 'CPU1', 'CPU2', 'CPU3'];
 
+/** 飛んでいる甲羅の回転の速さ（rad/秒） */
+const SHELL_SPIN = 10;
+
 const TRAIL_LENGTH = 8; // 残像に使う過去の位置の数（1フレームに1つ）
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -344,7 +347,7 @@ export class ShellScene extends Phaser.Scene {
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE') as ShellScene['keys'];
     const kb = this.input.keyboard!;
     kb.on('keydown-ESC', () => {
-      if (performance.now() - this.unlockedAt > 250) this.togglePause();
+      if (performance.now() - this.unlockedAt > 250) this.toggleMenu();
     });
     if (this.custom) {
       kb.addCapture('TAB');
@@ -367,6 +370,8 @@ export class ShellScene extends Phaser.Scene {
       kb.on('keydown-TWO', () => this.draftSelect(1));
       kb.on('keydown-THREE', () => this.draftSelect(2));
       kb.on('keydown-FOUR', () => this.draftSelect(3));
+      kb.on('keydown-FIVE', () => this.draftSelect(4));
+      kb.on('keydown-SIX', () => this.draftSelect(5));
       kb.on('keydown-N', () => this.draftPass());
     }
     if (this.cards && CARD_RULE.pick) {
@@ -436,11 +441,13 @@ export class ShellScene extends Phaser.Scene {
     $('draft').hidden = this.state !== 'draft';
     $('replay').hidden = !this.replay;
     if (this.state === 'draft') this.renderDraft();
-    ui.setPaused(this.state === 'paused');
+    ui.menuClose = () => this.toggleMenu();
+    this.showMenu();
     // 他のモードが共有の DOM を書き換えているかもしれないので作り直す
     this.hudBuilt = false;
     this.handKey = '';
     this.introRound = -1;
+    this.pcardHtml = [];
     this.renderHud();
     this.renderHand();
     this.renderIntro();
@@ -489,11 +496,33 @@ export class ShellScene extends Phaser.Scene {
     this.renderHand();
   }
 
-  private togglePause() {
-    if (this.role !== 'offline') return;
-    if (this.state === 'play') this.state = 'paused';
-    else if (this.state === 'paused') this.state = 'play';
-    ui.setPaused(this.state === 'paused');
+  /**
+   * Esc のメニュー（モード切替・オンライン対戦・操作説明）。ひとりで遊んでいる試合中・カウントダウン中はポーズして出す。
+   * オンライン対戦中や結果・ドラフトの画面ではゲームを止めずに重ねて出す
+   */
+  private menuOpen = false;
+  private pausedFrom: State = 'play';
+
+  private get menuShown() {
+    return this.state === 'paused' || this.menuOpen;
+  }
+
+  private toggleMenu() {
+    if (this.state === 'paused') this.state = this.pausedFrom;
+    else if (this.menuOpen) this.menuOpen = false;
+    else if ((this.state === 'play' || this.state === 'countdown') && this.role === 'offline') {
+      this.pausedFrom = this.state;
+      this.state = 'paused';
+    } else this.menuOpen = true;
+    this.showMenu();
+  }
+
+  private closeMenu() {
+    if (this.menuShown) this.toggleMenu();
+  }
+
+  private showMenu() {
+    ui.setPaused(this.menuShown, this.state === 'paused' ? '' : this.role === 'offline' ? 'ゲームは止まっていません' : '対戦は続いています');
   }
 
   update(_t: number, deltaMs: number) {
@@ -604,7 +633,7 @@ export class ShellScene extends Phaser.Scene {
 
   /** マウスを固定してよい場面か（マウスで押す画面が出ていない） */
   private canLock() {
-    return (this.state === 'play' || this.state === 'countdown') && $('lobby').hidden && $('draft').hidden && $('shell-result').hidden && !this.debugOpen;
+    return (this.state === 'play' || this.state === 'countdown') && !this.menuOpen && $('lobby').hidden && $('draft').hidden && $('shell-result').hidden && !this.debugOpen;
   }
 
   private bindPointerLock() {
@@ -629,7 +658,7 @@ export class ShellScene extends Phaser.Scene {
       this.unlockedAt = performance.now();
       // ゲーム側で外した（デバッグを開いた等）ときはポーズしない
       if (this.selfUnlock) this.selfUnlock = false;
-      else if (this.state === 'play' && this.role === 'offline') this.togglePause();
+      else if ((this.state === 'play' || this.state === 'countdown') && !this.menuShown) this.toggleMenu();
     });
   }
 
@@ -1444,7 +1473,7 @@ export class ShellScene extends Phaser.Scene {
     }
     // クラフトは試合中に甲羅が育つので、合間の画面はない
     if (this.craft) return this.newRound();
-    const ids: string[] = this.custom ? effectCandidates(this.actors.length) : draftCandidates(this.actors.length);
+    const ids: string[] = this.custom ? effectCandidates(DRAFT_CHOICES) : draftCandidates(DRAFT_CHOICES);
     this.draft = ids.map((id) => ({ id, takenBy: null }));
     // 脱落した順、最後まで残った人（勝者）が最後
     this.draftOrder = [...this.deadOrder, ...this.actors.filter((a) => !this.deadOrder.includes(a))];
@@ -1635,7 +1664,7 @@ export class ShellScene extends Phaser.Scene {
   private renderDraft() {
     this.renderDraftPlayers();
     const me = this.me;
-    $('draft').querySelector('h2')!.textContent = this.custom ? '効果を付ける' : 'カードを交換';
+    $('draft').querySelector('h2')!.textContent = this.custom ? '効果を1つ選ぶ' : 'カードを交換';
     $('draft-sub').textContent = `ラウンド${this.round}終了 ・ 先に${MATCH.winTarget}勝で優勝`;
     const turnActor = this.draftOrder[this.draftTurn];
     $('draft-order').innerHTML =
@@ -1855,21 +1884,47 @@ export class ShellScene extends Phaser.Scene {
   private introRound = -1;
 
   /** 左上のプレイヤー一覧：名前・HP・勝ち数と、デッキ／甲羅の色 */
+  /** 帯のカードの中身（変わったときだけ書き換える） */
+  private pcardHtml: string[] = [];
+
+  /** 試合場の上下の帯：プレイヤー1〜4のカード（名前・HP・勝ち数・甲羅3つと効果） */
   private renderHud() {
     if (this.actors.length === 0) return;
-    $('shell-hud').innerHTML =
-      `<div class="muted">ラウンド ${this.round}${this.drafting ? `（先に${MATCH.winTarget}勝）` : ''}</div>` +
-      this.actors
-        .map((a) => {
-          const hearts = a.alive ? '♥'.repeat(a.hp) + '♡'.repeat(Math.max(0, SHELL.hp - a.hp)) : '脱落';
-          const items = this.drafting ? this.targets(a) : [];
-          const deck = items.length
-            ? `<div class="sdeck${this.custom ? ' big' : ''}">${items.map((t) => `<i style="background:${hex(t.color)}" title="${escapeHtml(t.label)}"></i>`).join('')}</div>`
-            : '';
-          const mats = this.craft && a.pend.some(Boolean) ? `<div class="smats">${a.pend.map((m) => (m ? materialSvg(m, 14) : '<span class="mat-empty"></span>')).join('')}</div>` : '';
-          return `<div class="srow${a.alive ? '' : ' out'}"><span class="dot" style="background:${hex(a.color)}"></span><span>${escapeHtml(a.name)}</span><span class="hearts">${hearts}</span><span class="wins">${a.wins}勝</span></div>${deck}${mats}`;
-        })
-        .join('');
+    const label = `ラウンド ${this.round}${this.drafting ? `（先に${MATCH.winTarget}勝）` : ''}`;
+    if ($('round-label').textContent !== label) $('round-label').textContent = label;
+    for (let i = 0; i < MAX_PLAYERS; i++) {
+      const el = $(`pc${i}`);
+      const a = this.actors[i];
+      let html = '';
+      if (a) {
+        const hp = a.alive ? '♥'.repeat(Math.max(0, a.hp)) + `<i>${'♥'.repeat(Math.max(0, SHELL.hp - a.hp))}</i>` : '脱落';
+        const wins = this.drafting ? Array.from({ length: MATCH.winTarget }, (_, k) => (k < a.wins ? '<b>★</b>' : '★')).join('') : `${a.wins}勝`;
+        let body = '';
+        if (this.custom) {
+          body = `<div class="pc-shells">${a.loadout
+            .map((lv, k) => {
+              const sp = a.specs[k] ?? buildSpec(lv, k);
+              const m = this.craft ? a.pend[k] : null;
+              return `<div class="pc-shell">${this.icon(sp, 22)}<div class="badges">${this.badges(lv)}</div>${m ? materialSvg(m, 16) : ''}</div>`;
+            })
+            .join('')}</div>`;
+        } else if (this.cards) {
+          body = `<div class="pc-deck">${this.targets(a)
+            .map((t) => `<i style="background:${hex(t.color)}" title="${escapeHtml(t.label)}"></i>`)
+            .join('')}</div>`;
+        }
+        html =
+          `<div class="pc-head"><span class="nm">${escapeHtml(a.name)}</span>${a === this.me ? '<span class="you">あなた</span>' : ''}` +
+          `<span class="hp">${hp}</span><span class="wins${this.drafting ? '' : ' num'}">${wins}</span></div>${body}`;
+        el.classList.toggle('out', !a.alive);
+        el.classList.toggle('me', a === this.me);
+        el.style.setProperty('--c', hex(a.color));
+      }
+      if (this.pcardHtml[i] !== html) {
+        this.pcardHtml[i] = html;
+        el.innerHTML = html;
+      }
+    }
   }
 
   /** 画面下の手札：今投げる甲羅と、次に来る甲羅 */
@@ -1888,19 +1943,44 @@ export class ShellScene extends Phaser.Scene {
     const mini = (sp: ShellSpec, i: number) =>
       `<div class="card next" style="border-left:6px solid ${hex(sp.color)}"><span class="key">${i === 0 ? '次' : i + 1}</span><span class="cname">${sp.name}</span></div>`;
     if (me.rot) {
+      // カスタム甲羅：投げる順に3枚。今投げる甲羅は光らせ、補充中の甲羅は薄くして残り時間のバーを出す
       const cur = this.currentSlot(me);
-      el.innerHTML = me.rot
+      let nextTagged = false;
+      const html = me.rot
         .order()
         .map((slot) => {
           const sp = me.specs[slot];
           if (!sp) return '';
+          const ready = me.ready[slot];
+          let tag = '';
+          let cls = '';
+          if (!ready) {
+            tag = '補充中';
+            cls = ' wait';
+          } else if (slot === cur) {
+            tag = '今';
+            cls = ' now';
+          } else if (!nextTagged) {
+            tag = '次';
+            nextTagged = true;
+          }
           // クラフト：この甲羅に入っている、組み合わせ待ちの素材
           const m = this.craft ? me.pend[slot] : null;
-          const pend = m ? `<span class="cpend">${materialSvg(m, 18)}＋？</span>` : '';
-          if (!me.ready[slot]) return `<div class="card empty"><span class="key">${slot + 1}</span><span class="cname">${sp.name} 補充中…</span>${pend}</div>`;
-          return card(sp, slot === cur ? 'selected' : '', slot === cur ? '今' : `${slot + 1}`, pend);
+          const pend = m ? `<span class="hc-pend">${materialSvg(m, 16)}＋？</span>` : '';
+          const left = Math.max(0, Math.min(1, (me.slotRefill[slot] ?? 0) / SHELL.refillTime));
+          const bar = ready ? '' : `<div class="hc-bar"><i style="width:${Math.round((1 - left) * 100)}%"></i></div>`;
+          return (
+            `<div class="hcard${cls}" style="--c:${hex(sp.color)}"><div class="hc-ico">${this.icon(sp, 36)}</div>` +
+            `<div class="hc-body"><div class="hc-top">${tag ? `<span class="hc-tag">${tag}</span>` : ''}<span class="hc-name">${sp.name}</span>${pend}</div>` +
+            `<div class="badges">${me.loadout[slot] ? this.badges(me.loadout[slot]) : ''}</div></div>${bar}</div>`
+          );
         })
         .join('');
+      // 変わったときだけ書き換える（補充のバーは0.1秒ごとに進む）
+      if (this.handKey !== html) {
+        this.handKey = html;
+        el.innerHTML = html;
+      }
       return;
     }
     const h = me.hand!;
@@ -1964,6 +2044,26 @@ export class ShellScene extends Phaser.Scene {
     return this.debug.pizza ? pizzaSvg(levelsOf(spec), size) : shellSvg(spec, size);
   }
 
+  /** 甲羅の本体を塗る。効果が付いていればレベルの割合の円グラフ（rot から時計回り。rot を変えると回って見える） */
+  private fillShell(x: number, y: number, r: number, spec: ShellSpec, alpha: number, rot = -Math.PI / 2) {
+    const g = this.g;
+    const pie = pieOf(spec);
+    if (!pie || pie.length === 1) {
+      g.fillStyle(pie ? pie[0].color : spec.color, alpha);
+      g.fillCircle(x, y, r);
+      return;
+    }
+    let a = rot;
+    for (const p of pie) {
+      const b = a + p.frac * Math.PI * 2;
+      g.fillStyle(p.color, alpha);
+      g.beginPath();
+      g.slice(x, y, r, a, b, false);
+      g.fillPath();
+      a = b;
+    }
+  }
+
   /** 周回している手持ちの甲羅。拡散（一度に複数投げる）は小さな円3つで描く。angle は周回の進む向き */
   private drawOrbitShell(x: number, y: number, spec: ShellSpec, angle: number) {
     const ways = spec.ways ?? 1;
@@ -1976,8 +2076,8 @@ export class ShellScene extends Phaser.Scene {
       const a = -Math.PI / 2 + (i / ways) * Math.PI * 2;
       const cx = x + Math.cos(a) * spread;
       const cy = y + Math.sin(a) * spread;
-      g.fillStyle(spec.color, 1);
-      g.fillCircle(cx, cy, r);
+      // 周回の向きに合わせて回す
+      this.fillShell(cx, cy, r, spec, 1, angle);
       g.lineStyle(spec.heavy ? 3 : ways > 1 ? 1.5 : 2, 0xeaffea, 1);
       g.strokeCircle(cx, cy, r);
     }
@@ -2453,7 +2553,10 @@ export class ShellScene extends Phaser.Scene {
   /** 「オンライン対戦」ボタンとロビー画面をつなぐ */
   private bindLobby() {
     if (!this.online) return;
-    $('online-btn').onclick = () => this.openLobby();
+    $('online-btn').onclick = () => {
+      this.closeMenu();
+      this.openLobby();
+    };
     $('lobby-enter').onclick = () => this.enterRoom();
     $('lobby-close').onclick = () => this.closeLobby();
     $('lobby-leave').onclick = () => this.leaveOnline();
@@ -2881,8 +2984,8 @@ export class ShellScene extends Phaser.Scene {
         g.fillCircle(p.x, p.y, s.spec.radius * (0.35 + 0.55 * k));
       });
       if (this.drawPizza(s.x, s.y, s.spec.radius, s.spec, (performance.now() / 1000) * 9 + s.id, s.fade, false)) continue;
-      g.fillStyle(s.spec.color, s.fade);
-      g.fillCircle(s.x, s.y, s.spec.radius);
+      // 飛んでいる甲羅は回転させる。試合の時刻で決めるので、リプレイのスロー再生では回転も一緒に遅くなる
+      this.fillShell(s.x, s.y, s.spec.radius, s.spec, s.fade, f.tm * SHELL_SPIN + s.id);
       g.lineStyle(s.spec.heavy ? 3 : 2, 0xeaffea, s.fade);
       g.strokeCircle(s.x, s.y, s.spec.radius);
       if (s.live.rebound) {

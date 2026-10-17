@@ -61,6 +61,9 @@ export const DECK: ShellType[] = ['normal', 'normal', 'bouncy', 'bouncy', 'split
  * 「候補1枚とデッキの1枚を交換」か「交換しない」を選ぶ。デッキの枚数は変わらない。先に winTarget 勝した人が優勝
  */
 export const MATCH = { winTarget: 5 };
+
+/** ドラフトで並べる候補の数（取れるのは1人1つまで。人数より多く並べて選ぶ幅を広げる） */
+export const DRAFT_CHOICES = 6;
 export const STARTER_DECK: ShellType[] = ['normal', 'normal', 'normal', 'normal', 'normal', 'normal'];
 export const DRAFT_POOL: ShellType[] = ['bouncy', 'split', 'homing', 'heavy', 'triple', 'fast', 'pierce', 'accel'];
 

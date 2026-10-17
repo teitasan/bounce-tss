@@ -1,5 +1,34 @@
 import type * as Phaser from 'phaser';
 import { SHELLS, type ShellSpec } from './cards';
+import { EFFECTS, EFFECT_IDS } from './custom';
+
+/**
+ * 甲羅の塗り分け（円グラフ）：付いている効果を、レベルの割合で扇形にする。レベルの高い順に12時から時計回り。
+ * 効果のない甲羅や、カード甲羅などレベルを持たない甲羅は null（甲羅の色1色で塗る）
+ */
+export function pieOf(spec: ShellSpec): { color: number; frac: number }[] | null {
+  const lv = spec.levels;
+  if (!lv) return null;
+  const list = EFFECT_IDS.filter((e) => lv[e] > 0).sort((a, b) => lv[b] - lv[a]);
+  const total = list.reduce((n, e) => n + lv[e], 0);
+  if (total === 0) return null;
+  return list.map((e) => ({ color: EFFECTS[e].color, frac: lv[e] / total }));
+}
+
+/** 円グラフの塗り（SVG）。parts が1つなら円 */
+function pieSvgFill(x: number, y: number, r: number, parts: { color: number; frac: number }[]): string {
+  if (parts.length === 1) return `<circle cx="${x}" cy="${y}" r="${r}" fill="${hex(parts[0].color)}"/>`;
+  let a = -Math.PI / 2;
+  return parts
+    .map((p) => {
+      const b = a + p.frac * Math.PI * 2;
+      const large = b - a > Math.PI ? 1 : 0;
+      const d = `M${x} ${y}L${x + Math.cos(a) * r} ${y + Math.sin(a) * r}A${r} ${r} 0 ${large} 1 ${x + Math.cos(b) * r} ${y + Math.sin(b) * r}Z`;
+      a = b;
+      return `<path d="${d}" fill="${hex(p.color)}"/>`;
+    })
+    .join('');
+}
 
 /**
  * 甲羅の見た目。効果ごとに模様を決め、ゲーム画面（Graphics）と HUD（SVG）で同じルールで描く。
@@ -143,9 +172,13 @@ export function shellSvg(spec: ShellSpec, size = 26): string {
   const m = marksOf(spec);
   const c = size / 2;
   const r = size * (m.multi ? 0.2 : 0.3);
+  const pie = pieOf(spec);
+  // 効果が付いていれば円グラフで塗る。なければ甲羅の色に、内側を一段暗くした模様
   const body = (x: number, y: number, rr: number) =>
-    `<circle cx="${x}" cy="${y}" r="${rr}" fill="${hex(spec.color)}" stroke="#eaffea" stroke-width="${m.big ? 2.4 : 1.2}"/>` +
-    `<circle cx="${x}" cy="${y}" r="${rr * 0.62}" fill="${hex(shade(spec.color, 0.62))}"/>` +
+    (pie
+      ? pieSvgFill(x, y, rr, pie) + `<circle cx="${x}" cy="${y}" r="${rr}" fill="none" stroke="#eaffea" stroke-width="${m.big ? 2.4 : 1.2}"/>`
+      : `<circle cx="${x}" cy="${y}" r="${rr}" fill="${hex(spec.color)}" stroke="#eaffea" stroke-width="${m.big ? 2.4 : 1.2}"/>` +
+        `<circle cx="${x}" cy="${y}" r="${rr * 0.62}" fill="${hex(shade(spec.color, 0.62))}"/>`) +
     `<circle cx="${x - rr * 0.35}" cy="${y - rr * 0.35}" r="${rr * 0.25}" fill="#fff" fill-opacity=".35"/>`;
   let s = '';
   if (m.fast) s += `<path d="M${c - r * 2.1} ${c - r * 0.45}h${r * 0.9}M${c - r * 2.1} ${c + r * 0.45}h${r * 0.9}" stroke="#fff" stroke-opacity=".6" stroke-width="1.3"/>`;

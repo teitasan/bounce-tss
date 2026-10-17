@@ -130,9 +130,13 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.addCapture('TAB');
     this.input.keyboard!.on('keydown-TAB', () => ui.toggleDebug());
     this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
+    ui.menuClose = () => this.togglePause();
     this.input.mouse?.disableContextMenu();
     // モード切替で戻ってきたとき、ポーズ表示をこのモードの状態に合わせる
-    this.events.on('wake', () => ui.setPaused(this.state === 'paused'));
+    this.events.on('wake', () => {
+      ui.menuClose = () => this.togglePause();
+      ui.setPaused(this.state === 'paused');
+    });
 
     ui.setupDebug({
       getBuild: () => this.build,

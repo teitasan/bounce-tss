@@ -8,7 +8,36 @@
   <body>
     <div id="game"></div>
 
-    <div id="modebar"><button type="button" data-mode="rogue">ローグライク</button><button type="button" data-mode="shell">甲羅バトル</button><button type="button" data-mode="cards">カード甲羅</button><button type="button" data-mode="custom">カスタム甲羅</button><button type="button" data-mode="craft">クラフト</button></div>
+    <!-- Esc のメニュー：モード切替・オンライン対戦・操作説明。ゲーム中は出さない -->
+    <div id="paused" class="overlay" hidden>
+      <div class="panel menu-panel">
+        <h2 id="menu-title">ポーズ中</h2>
+        <p id="menu-sub" class="muted" hidden></p>
+        <h3>モード</h3>
+        <div id="modebar"><button type="button" data-mode="rogue">ローグライク</button><button type="button" data-mode="shell">甲羅バトル</button><button type="button" data-mode="cards">カード甲羅</button><button type="button" data-mode="custom">カスタム甲羅</button><button type="button" data-mode="craft">クラフト</button></div>
+        <button id="online-btn" class="custom-only" type="button">オンライン対戦</button>
+        <h3>操作</h3>
+        <ul id="help" class="help rogue-only">
+          <li><b>WASD</b>移動</li>
+          <li><b>マウス</b>照準</li>
+          <li><b>左クリック / Space</b>射撃</li>
+          <li><b>Tab</b>デバッグ</li>
+          <li><b>Esc</b>メニュー</li>
+        </ul>
+        <ul id="shell-help" class="help shell-only">
+          <li><b>WASD</b>移動</li>
+          <li><b>マウス</b>照準</li>
+          <li><b>左クリック / Space</b>甲羅を投げる（手持ちの甲羅は自分の周りを回る）</li>
+          <li class="cards-only"><b>画面下</b>今の甲羅と次に来る甲羅</li>
+          <li class="craft-only"><b>箱</b>甲羅で壊すと素材が出る。触れて拾うと今の甲羅に入り、2つ揃うと効果になる</li>
+          <li><b>画面をクリック</b>マウスを画面内に固定（Esc で解除）</li>
+          <li class="custom-only craft-only"><b>Tab</b>デバッグ</li>
+          <li><b>R</b>自分が脱落した後に早送り・結果画面で次へ</li>
+          <li><b>Esc</b>メニュー</li>
+        </ul>
+        <button id="menu-close" type="button">ゲームに戻る（Esc）</button>
+      </div>
+    </div>
 
     <div id="hud" class="rogue-only">
       <div class="row"><span id="lv">Lv 1</span><div id="xpbar"><div id="xpfill"></div></div></div>
@@ -16,9 +45,7 @@
       <div id="info"></div>
     </div>
     <div id="build" class="rogue-only"></div>
-    <div id="help" class="rogue-only">WASD 移動 / マウス 照準 / 左クリック / Space 射撃 / Esc ポーズ / Tab デバッグ</div>
 
-    <div id="paused" class="overlay" hidden><div class="panel"><h2>ポーズ中</h2><p>Esc で再開</p></div></div>
 
     <div id="levelup" class="overlay rogue-only" hidden>
       <div class="panel">
@@ -38,8 +65,9 @@
 
     <div id="debug" class="rogue-only" hidden></div>
 
-    <div id="shell-hud" class="shell-only"></div>
-    <button id="online-btn" class="custom-only" type="button">オンライン対戦</button>
+    <!-- 試合場の上下の帯：上にプレイヤー1・2、下にプレイヤー3・4。下の真ん中に自分の手元の甲羅 -->
+    <div id="pbar-top" class="pbar shell-only"><div class="pcard" id="pc0"></div><div id="round-label"></div><div class="pcard" id="pc1"></div></div>
+    <div id="pbar-bottom" class="pbar shell-only"><div class="pcard" id="pc2"></div><div id="hand" hidden></div><div class="pcard" id="pc3"></div></div>
     <div id="lobby" class="overlay custom-only" hidden>
       <div class="panel lobby-panel">
         <h2 id="lobby-title">オンライン対戦</h2>
@@ -59,8 +87,6 @@
       </div>
     </div>
     <div id="shell-debug" class="shell-only" hidden></div>
-    <div id="hand" class="shell-only" hidden></div>
-    <div id="shell-help" class="help shell-only">WASD 移動 / マウス 照準 / 左クリック・Space 甲羅を投げる（手持ちの甲羅は自分の周りを回る）<span class="cards-only">（画面下が今の甲羅と次に来る甲羅）</span><span class="craft-only"> / 箱を甲羅で壊すと素材が出る（触れて拾う）</span><span class="custom-only craft-only"> / Tab デバッグ</span> / Esc ポーズ / 画面をクリックするとマウスを画面内に固定（Esc で解除）</div>
     <div id="draft" class="overlay cards-only" hidden>
       <div class="dp" id="draft-p0"></div>
       <div class="dp" id="draft-p1"></div>
