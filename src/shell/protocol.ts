@@ -28,7 +28,7 @@ export type ServerMsg =
 
 /** 参加者 → ホスト */
 export type GuestMsg =
-  | { k: 'input'; mx: number; my: number; aim: number; fire: boolean }
+  | { k: 'input'; mx: number; my: number; aim: number; fire: boolean; slow?: boolean }
   | { k: 'draftApply'; ci: number; ti: number }
   | { k: 'draftPass' };
 

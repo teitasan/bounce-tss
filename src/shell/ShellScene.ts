@@ -23,6 +23,7 @@ export const SHELL = {
   actorRadius: 14, // 見た目の大きさ。移動・壁・キャラ同士の押し合いに使う
   hurtRadius: 11, // 甲羅が当たる判定。見た目より少し小さくして、かすり避けを許す
   moveSpeed: 230,
+  slowMove: 0.45, // Shift を押している間の移動の速さ（倍率）
   invincible: 1.2, // 被弾後の無敵（秒）
   knockback: 420,
   maxStock: 2, // 手持ち（周回している甲羅）の最大数
@@ -53,7 +54,7 @@ interface Actor {
   /** remote のとき、部屋でのプレイヤー ID */
   pid: string | null;
   /** remote のとき、最後に届いた操作 */
-  input: { mx: number; my: number; aim: number; fire: boolean };
+  input: { mx: number; my: number; aim: number; fire: boolean; slow?: boolean };
   x: number;
   y: number;
   kx: number;
@@ -68,6 +69,8 @@ interface Actor {
   orbitPhase: number;
   alive: boolean;
   wins: number;
+  /** この試合で相手に当てた数（表示だけ。勝敗には関係しない） */
+  hits: number;
   hand: Hand | null;
   /** カード甲羅の試合を通して育てるデッキ */
   deck: ShellType[];
@@ -80,7 +83,8 @@ interface Actor {
   slotRefill: number[];
   /** クラフト：甲羅1〜3それぞれに入っている、組み合わせ待ちの素材（2つ目が入ると効果になる） */
   pend: (Material | null)[];
-  ai: { think: number; moveX: number; moveY: number; throwTimer: number; strafe: number; pick: number };
+  /** fire は、考えた結果「この照準で投げる」と決めたか（照準を確かめたときだけ投げる） */
+  ai: { think: number; moveX: number; moveY: number; throwTimer: number; strafe: number; pick: number; fire: boolean };
 }
 
 interface Shell extends Mover {
@@ -182,8 +186,8 @@ type State = 'countdown' | 'play' | 'paused' | 'result' | 'draft';
 
 // ---- オンライン対戦の配信データ（ホスト → 参加者）。通信量を減らすため配列で詰める ----
 type FxEvent = { e: string; [k: string]: unknown };
-/** [x, y, aim, alive, inv, hp, wins, targeted, orbits[[x, y, specId, angle]], 投げる順, 手元にある甲羅のビット, 補充の残り秒, 手持ち数] */
-type SnapActor = [number, number, number, number, number, number, number, number, [number, number, number, number][], number[], number, number[], number];
+/** [x, y, aim, alive, inv, hp, wins, targeted, orbits[[x, y, specId, angle]], 投げる順, 手元にある甲羅のビット, 補充の残り秒, 手持ち数, 命中数] */
+type SnapActor = [number, number, number, number, number, number, number, number, [number, number, number, number][], number[], number, number[], number, number];
 /** [id, x, y, angle, specId, fade, 投げた人の席, 模様のビット（1分裂 2貫通 4反発 8追尾）] */
 type SnapShell = [number, number, number, number, number, number, number, number];
 interface Snap {
@@ -269,7 +273,7 @@ export class ShellScene extends Phaser.Scene {
   /** cursor は再生中の時刻、idx は今映しているコマ */
   private replay: { frames: Frame[]; cursor: number; idx: number; then: 'live' | 'winner'; kill: Kill } | null = null;
   private label!: Phaser.GameObjects.Text;
-  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'SPACE', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'SPACE' | 'SHIFT', Phaser.Input.Keyboard.Key>;
   private state: State = 'countdown';
   private countdown = 0;
   private actors: Actor[] = [];
@@ -344,7 +348,7 @@ export class ShellScene extends Phaser.Scene {
       .setResolution(2 / PIXEL)
       .setOrigin(0.5)
       .setDepth(30);
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE') as ShellScene['keys'];
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,SHIFT') as ShellScene['keys'];
     const kb = this.input.keyboard!;
     kb.on('keydown-ESC', () => {
       if (performance.now() - this.unlockedAt > 250) this.toggleMenu();
@@ -416,6 +420,7 @@ export class ShellScene extends Phaser.Scene {
       orbitPhase: 0,
       alive: true,
       wins: 0,
+      hits: 0,
       hand: null,
       deck: [...STARTER_DECK],
       loadout: starterLoadout(),
@@ -424,7 +429,7 @@ export class ShellScene extends Phaser.Scene {
       ready: [],
       slotRefill: [],
       pend: [null, null, null],
-      ai: { think: 0, moveX: 0, moveY: 0, throwTimer: 0, strafe: 1, pick: 0 },
+      ai: { think: 0, moveX: 0, moveY: 0, throwTimer: 0, strafe: 1, pick: 0, fire: false },
     }));
     this.newRound();
     // ?r=部屋名 付きの URL で開いたら、その部屋のロビーを開く
@@ -489,7 +494,7 @@ export class ShellScene extends Phaser.Scene {
       a.specs = a.loadout.map((lv, i) => buildSpec(lv, i));
       a.ready = Array(SHELL_COUNT).fill(true);
       a.slotRefill = Array(SHELL_COUNT).fill(0);
-      a.ai = { think: 0, moveX: 0, moveY: 0, throwTimer: 0.5 + Math.random(), strafe: Math.random() < 0.5 ? 1 : -1, pick: 0 };
+      a.ai = { think: 0, moveX: 0, moveY: 0, throwTimer: 0.5 + Math.random(), strafe: Math.random() < 0.5 ? 1 : -1, pick: 0, fire: false };
     });
     this.state = 'countdown';
     this.countdown = SHELL.countdown;
@@ -714,23 +719,28 @@ export class ShellScene extends Phaser.Scene {
       if (!a.alive) continue;
       let mx = 0;
       let my = 0;
+      // Shift を押している間は低速移動（細かく避ける用）
+      let slow = false;
       if (a.ctrl === 'local') {
         if (this.keys.A.isDown) mx -= 1;
         if (this.keys.D.isDown) mx += 1;
         if (this.keys.W.isDown) my -= 1;
         if (this.keys.S.isDown) my += 1;
+        slow = this.keys.SHIFT.isDown;
       } else if (a.ctrl === 'remote') {
         mx = a.input.mx;
         my = a.input.my;
         a.aim = a.input.aim;
+        slow = !!a.input.slow;
       } else if (canThrow) {
         this.think(a, dt);
         mx = a.ai.moveX;
         my = a.ai.moveY;
       }
       const len = Math.hypot(mx, my) || 1;
-      a.x += ((mx / len) * SHELL.moveSpeed + a.kx) * dt;
-      a.y += ((my / len) * SHELL.moveSpeed + a.ky) * dt;
+      const speed = SHELL.moveSpeed * (slow ? SHELL.slowMove : 1);
+      a.x += ((mx / len) * speed + a.kx) * dt;
+      a.y += ((my / len) * speed + a.ky) * dt;
       a.kx *= damp;
       a.ky *= damp;
       a.inv = Math.max(0, a.inv - dt);
@@ -757,7 +767,7 @@ export class ShellScene extends Phaser.Scene {
       if (!canThrow) continue;
       const wantThrow =
         a.ctrl === 'bot'
-          ? a.ai.throwTimer <= 0 && !this.debug.cpuHold
+          ? a.ai.fire && a.ai.throwTimer <= 0 && !this.debug.cpuHold
           : a.ctrl === 'remote'
             ? a.input.fire
             : this.input.activePointer.leftButtonDown() || this.keys.SPACE.isDown;
@@ -882,6 +892,7 @@ export class ShellScene extends Phaser.Scene {
       this.burst(s.x, s.y, 4, a.color, 120, 0.15, 2);
     }
     a.cooldown = SHELL.throwCooldown;
+    a.ai.fire = false;
     if (a.bot) a.ai.throwTimer = SHELL.botThrowInterval[0] + Math.random() * (SHELL.botThrowInterval[1] - SHELL.botThrowInterval[0]);
   }
 
@@ -1007,20 +1018,27 @@ export class ShellScene extends Phaser.Scene {
     a.ai.moveX = mx;
     a.ai.moveY = my;
 
-    // 照準と甲羅選び
+    // 照準と甲羅選び。投げるのは、ここで照準を確かめたときだけ（考えていない間に古い照準で投げない）
+    a.ai.fire = false;
     if (a.ai.throwTimer <= 0 && a.cooldown <= 0 && a.stock > 0) {
-      const cs = this.currentSpec(a);
-      const shot = this.findShot(a, target, cs?.radius ?? SHELLS.normal.radius, cs?.curve ? cs.curve / cs.speed : 0);
+      const cs = this.currentSpec(a) ?? SHELLS.normal;
+      const shot = this.findShot(a, target, cs);
       if (a.hand) a.ai.pick = CARD_RULE.pick ? this.pickCard(a.hand, shot) : 0;
       if (shot) {
         a.aim = shot.angle + (Math.random() - 0.5) * 0.12;
-      } else if (this.currentSpec(a)?.homingTurn) {
-        // 当たる角度がなくても、追尾甲羅なら相手の方へ投げておく
+        a.ai.fire = true;
+      } else if (cs.homingTurn && this.safeAngle(a, cs, Math.atan2(dy, dx))) {
+        // 当たる角度がなくても、追尾甲羅なら相手の方へ投げておく（自分に戻ってこない角度のときだけ）
         a.aim = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.6;
+        a.ai.fire = true;
       } else if (this.craft && this.nearestCrate(a, 360)) {
         // 相手を狙えないときは近くの箱を壊して素材を出す
         const c = this.nearestCrate(a, 360)!;
-        a.aim = Math.atan2(c.y + c.h / 2 - a.y, c.x + c.w / 2 - a.x);
+        const ang = Math.atan2(c.y + c.h / 2 - a.y, c.x + c.w / 2 - a.x);
+        if (this.safeAngle(a, cs, ang)) {
+          a.aim = ang;
+          a.ai.fire = true;
+        } else a.ai.throwTimer = 0.25;
       } else {
         a.ai.throwTimer = 0.25;
       }
@@ -1060,33 +1078,57 @@ export class ShellScene extends Phaser.Scene {
   }
 
   /** 角度を総当たりで試し、一番早く target に届く角度を返す。自分に跳ね返ってくる角度は避ける */
-  /** turn はカーブ甲羅が 1px 進むごとに曲がる角度（rad） */
-  private findShot(a: Actor, target: Actor, radius: number, turn = 0): { angle: number; bounces: number } | null {
-    const hitR = SHELL.hurtRadius + radius;
+  /**
+   * 甲羅を角度 ang で投げたときの道筋をたどる（壁で反射、カーブも計算に入れる。追尾は入れない）。
+   * 反射回数の上限か寿命まで進め、target に当たるまでの距離と、自分のところへ戻ってくるかを返す。
+   * 相手に当たる道筋でも、外れたときに戻ってくるかまで調べる（相手は避けるので）
+   */
+  private traceShot(a: Actor, spec: ShellSpec, ang: number, target: Actor | null): { hitAt: number; bounces: number; returns: boolean } {
+    const r = spec.radius;
+    const hitR = SHELL.hurtRadius + r;
+    const off = SHELL.actorRadius + r + 2;
+    const sim = { x: a.x + Math.cos(ang) * off, y: a.y + Math.sin(ang) * off, vx: Math.cos(ang), vy: Math.sin(ang) };
+    const turn = spec.curve ? (spec.curve / spec.speed) * 5 : 0;
+    const maxTravel = Math.min(spec.life * spec.speed, 2400);
+    const grace = spec.speed * SHELL.ownerGrace;
+    let hitAt = -1;
+    let hitBounces = 0;
+    let bounces = 0;
+    for (let travelled = 0; travelled < maxTravel; travelled += 5) {
+      if (turn) {
+        const c = Math.cos(turn);
+        const sn = Math.sin(turn);
+        [sim.vx, sim.vy] = [sim.vx * c - sim.vy * sn, sim.vx * sn + sim.vy * c];
+      }
+      bounces += moveShell(sim, r, 5);
+      if (bounces > spec.bounces) break;
+      if (hitAt < 0 && target && Math.hypot(sim.x - target.x, sim.y - target.y) < hitR) {
+        hitAt = travelled;
+        hitBounces = bounces;
+      }
+      // 投げた直後は自分に当たらないので、その後に自分の近くへ戻ってくるか（少し動いても当たる幅を見る）
+      if (travelled > grace && Math.hypot(sim.x - a.x, sim.y - a.y) < hitR + 24) return { hitAt, bounces: hitBounces, returns: true };
+    }
+    return { hitAt, bounces: hitBounces, returns: false };
+  }
+
+  /** この角度で投げても自分に戻ってこないか */
+  private safeAngle(a: Actor, spec: ShellSpec, ang: number) {
+    return !this.traceShot(a, spec, ang, null).returns;
+  }
+
+  /** 角度を総当たりで試し、一番早く target に届き、外れても自分に戻ってこない角度を返す */
+  private findShot(a: Actor, target: Actor, spec: ShellSpec): { angle: number; bounces: number } | null {
     const direct = Math.atan2(target.y - a.y, target.x - a.x);
     let best: { angle: number; bounces: number } | null = null;
     let bestLen = Infinity;
     const N = 96;
     for (let i = 0; i <= N; i++) {
       const ang = i === N ? direct : (i / N) * Math.PI * 2;
-      const off = SHELL.actorRadius + radius + 2;
-      const sim = { x: a.x + Math.cos(ang) * off, y: a.y + Math.sin(ang) * off, vx: Math.cos(ang), vy: Math.sin(ang) };
-      let travelled = 0;
-      let bounces = 0;
-      let result: 'hit' | 'self' | null = null;
-      for (; travelled < 900 && result === null; travelled += 5) {
-        if (turn) {
-          const c = Math.cos(turn * 5);
-          const sn = Math.sin(turn * 5);
-          [sim.vx, sim.vy] = [sim.vx * c - sim.vy * sn, sim.vx * sn + sim.vy * c];
-        }
-        bounces += moveShell(sim, radius, 5);
-        if (Math.hypot(sim.x - target.x, sim.y - target.y) < hitR) result = 'hit';
-        else if (travelled > 400 * SHELL.ownerGrace && Math.hypot(sim.x - a.x, sim.y - a.y) < hitR + 10) result = 'self';
-      }
-      if (result === 'hit' && travelled < bestLen) {
-        bestLen = travelled;
-        best = { angle: ang, bounces };
+      const t = this.traceShot(a, spec, ang, target);
+      if (t.hitAt >= 0 && !t.returns && t.hitAt < bestLen) {
+        bestLen = t.hitAt;
+        best = { angle: ang, bounces: t.bounces };
       }
     }
     return best;
@@ -1237,6 +1279,7 @@ export class ShellScene extends Phaser.Scene {
   /** by は当てた人（リプレイで一緒に映す） */
   private damage(a: Actor, dx: number, dy: number, spec: ShellSpec, by?: Actor) {
     if (a === this.me && this.debug.invincible) return;
+    if (by && by !== a) by.hits++;
     a.hp -= 1;
     a.inv = SHELL.invincible;
     const sp = Math.hypot(dx, dy) || 1;
@@ -1465,6 +1508,7 @@ export class ShellScene extends Phaser.Scene {
       this.round = 0;
       for (const a of this.actors) {
         a.wins = 0;
+      a.hits = 0;
         a.deck = [...STARTER_DECK];
         a.loadout = starterLoadout();
         a.pend = [null, null, null];
@@ -1915,7 +1959,7 @@ export class ShellScene extends Phaser.Scene {
         }
         html =
           `<div class="pc-head"><span class="nm">${escapeHtml(a.name)}</span>${a === this.me ? '<span class="you">あなた</span>' : ''}` +
-          `<span class="hp">${hp}</span><span class="wins${this.drafting ? '' : ' num'}">${wins}</span></div>${body}`;
+          `<span class="hp">${hp}</span><span class="hits" title="この試合で相手に当てた数">命中 ${a.hits}</span><span class="wins${this.drafting ? '' : ' num'}">${wins}</span></div>${body}`;
         el.classList.toggle('out', !a.alive);
         el.classList.toggle('me', a === this.me);
         el.style.setProperty('--c', hex(a.color));
@@ -2156,6 +2200,7 @@ export class ShellScene extends Phaser.Scene {
       x.ready.reduce((b, v, i) => (v ? b | (1 << i) : b), 0),
       x.slotRefill.map(r2),
       x.stock,
+      x.hits,
     ]);
     const sh: SnapShell[] = this.shells
       .filter((s) => !s.dead)
@@ -2210,7 +2255,7 @@ export class ShellScene extends Phaser.Scene {
     if (!a) return;
     if (d.k === 'input') {
       const c = (v: unknown) => Math.max(-1, Math.min(1, Number(v) || 0));
-      a.input = { mx: c(d.mx), my: c(d.my), aim: Number(d.aim) || 0, fire: !!d.fire };
+      a.input = { mx: c(d.mx), my: c(d.my), aim: Number(d.aim) || 0, fire: !!d.fire, slow: !!d.slow };
       return;
     }
     if (this.state !== 'draft' || this.draftBusy || this.draftOrder[this.draftTurn] !== a) return;
@@ -2292,6 +2337,7 @@ export class ShellScene extends Phaser.Scene {
     this.round = 0;
     for (const a of this.actors) {
       a.wins = 0;
+      a.hits = 0;
       a.deck = [...STARTER_DECK];
       a.loadout = starterLoadout();
       a.pend = [null, null, null];
@@ -2315,6 +2361,7 @@ export class ShellScene extends Phaser.Scene {
     this.mySeat = seats.findIndex((p) => p.pid === net.you);
     for (const a of this.actors) {
       a.wins = 0;
+      a.hits = 0;
       a.loadout = starterLoadout();
       a.specs = a.loadout.map((lv, i) => buildSpec(lv, i));
     }
@@ -2385,6 +2432,7 @@ export class ShellScene extends Phaser.Scene {
       a.ready = [0, 1, 2].map((b) => !!(v[10] & (1 << b)));
       a.slotRefill = v[11];
       a.stock = v[12];
+      a.hits = v[13] ?? 0;
     });
     if (snap.lo) {
       snap.lo.forEach((lo, i) => {
@@ -2534,7 +2582,7 @@ export class ShellScene extends Phaser.Scene {
       if (this.keys.W.isDown) my -= 1;
       if (this.keys.S.isDown) my += 1;
       const fire = (ptr.leftButtonDown() || this.keys.SPACE.isDown) && !this.replay && this.state === 'play';
-      this.net?.toHost({ k: 'input', mx, my, aim: r2(me.aim), fire });
+      this.net?.toHost({ k: 'input', mx, my, aim: r2(me.aim), fire, slow: this.keys.SHIFT.isDown });
     }
     this.updateReplay(realDt);
     this.updateParticles(realDt);
@@ -2907,6 +2955,14 @@ export class ShellScene extends Phaser.Scene {
     else this.label.setText('').setFontSize(48);
 
     if (this.debug.hitbox) this.drawHitboxes();
+    // 低速移動中は自分の当たり判定を見せる（東方の低速移動と同じ）
+    const mf = frame.actors[this.mySeat];
+    if (me && me.alive && mf && this.keys.SHIFT.isDown) {
+      g.lineStyle(1.5, 0xffffff, 0.9);
+      g.strokeCircle(mf.x, mf.y, SHELL.hurtRadius);
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(mf.x, mf.y, 2.5);
+    }
 
     const ap = this.aimPoint();
     g.lineStyle(2, 0xffffff, 0.85);

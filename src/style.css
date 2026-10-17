@@ -214,7 +214,8 @@ body:not(.mode-rogue) #game { top: var(--band); bottom: var(--band); }
 .pc-head .you { font-size: 10px; color: #0a0d13; background: var(--c); border-radius: 4px; padding: 0 5px; font-weight: 700; }
 .pc-head .hp { color: #ff6b81; letter-spacing: 1px; }
 .pc-head .hp i { color: #3a4358; font-style: normal; }
-.pc-head .wins { margin-left: auto; color: #3a455c; font-size: 12px; letter-spacing: 1px; }
+.pc-head .hits { margin-left: auto; font-size: 11px; color: #aab6cf; font-variant-numeric: tabular-nums; }
+.pc-head .wins { color: #3a455c; font-size: 12px; letter-spacing: 1px; }
 .pc-head .wins b { color: #ffd166; font-weight: 400; }
 .pc-head .wins.num { color: #aab6cf; letter-spacing: 0; }
 .pc-shells { display: flex; gap: 10px; min-width: 0; }
