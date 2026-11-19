@@ -28,6 +28,28 @@
       </div>
     </div>
     <script>
+      (function() {
+        if (typeof Element !== "undefined" && Element.prototype && Element.prototype.requestPointerLock && !Element.prototype._kouraSafePointerLock) {
+          var origLock = Element.prototype.requestPointerLock;
+          Element.prototype._kouraSafePointerLock = true;
+          Element.prototype.requestPointerLock = function() {
+            try {
+              var res = origLock.apply(this, arguments);
+              if (res && typeof res.catch === "function") res.catch(function() {});
+              return res;
+            } catch (err) {
+              return undefined;
+            }
+          };
+        }
+        if (typeof Document !== "undefined" && Document.prototype && Document.prototype.exitPointerLock && !Document.prototype._kouraSafeExitLock) {
+          var origExit = Document.prototype.exitPointerLock;
+          Document.prototype._kouraSafeExitLock = true;
+          Document.prototype.exitPointerLock = function() {
+            try { return origExit.apply(this, arguments); } catch (err) { return undefined; }
+          };
+        }
+      })();
       let canvas = document.querySelector("#unity-canvas");
       let fullscreenContainer = document.querySelector("#unity-fullscreen-container");
 
@@ -57,12 +79,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Quantum-Enterprise-v2.loader.js";
+      var loaderUrl = buildUrl + "/Quantum-Enterprise-v3.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/Quantum-Enterprise-v2.data.unityweb",
-        frameworkUrl: buildUrl + "/Quantum-Enterprise-v2.framework.js.unityweb",
-        codeUrl: buildUrl + "/Quantum-Enterprise-v2.wasm.unityweb",
+        dataUrl: buildUrl + "/Quantum-Enterprise-v3.data.unityweb",
+        frameworkUrl: buildUrl + "/Quantum-Enterprise-v3.framework.js.unityweb",
+        codeUrl: buildUrl + "/Quantum-Enterprise-v3.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
 
         // If you have a custom web site structure, or want to place multiple Unity build instances on the same page,
